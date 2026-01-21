@@ -124,6 +124,40 @@ LOGIN_REDIRECT_URL = 'tasks'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# --- LOGGING ---
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG' if DEBUG else 'INFO',
+    },
+    'loggers': {
+        'pagina_usuario': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
 # --- AZURE BLOB STORAGE (opcional) ---
 # Provee la connection string mediante variable de entorno `AZURE_STORAGE_CONNECTION_STRING`
 # y el nombre del container mediante `AZURE_CONTAINER_NAME`.

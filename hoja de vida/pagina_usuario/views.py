@@ -11,6 +11,7 @@ from django.template.loader import get_template
 from weasyprint import HTML, CSS
 from io import BytesIO
 import os
+import logging
 
 from pypdf import PdfReader, PdfWriter
 
@@ -26,6 +27,8 @@ from .forms import (
     ProductosForm, RecomendacionForm, CursoForm, 
     TaskForm, EducacionForm
 )
+
+logger = logging.getLogger(__name__)
 
 # --- VISTAS DE AUTENTICACIÓN ---
 
@@ -53,15 +56,21 @@ def login_user(request):
     if request.method == 'GET':
         return render(request, 'login_user.html', {'form': AuthenticationForm()})
     else:
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect('tasks')
-        return render(request, 'login_user.html', {'form': form, 'error': 'Datos incorrectos.'})
+        try:
+            form = AuthenticationForm(request, data=request.POST)
+            if form.is_valid():
+                username = form.cleaned_data.get('username')
+                password = form.cleaned_data.get('password')
+                user = authenticate(username=username, password=password)
+                if user is not None:
+                    login(request, user)
+                    logger.info(f"User {username} logged in successfully")
+                    return redirect('tasks')
+            logger.warning(f"Failed login attempt with form errors: {form.errors}")
+            return render(request, 'login_user.html', {'form': form, 'error': 'Datos incorrectos.'})
+        except Exception as e:
+            logger.error(f"Error in login_user: {str(e)}", exc_info=True)
+            return render(request, 'login_user.html', {'form': AuthenticationForm(), 'error': 'Error de servidor. Intenta de nuevo.'})
 
 @login_required
 def signout(request):
@@ -138,15 +147,22 @@ def ver_hoja_de_vida(request, username=None):
     # Si username está especificado, usa ese, si no y usuario está autenticado, usa su perfil
     # Si es anónimo, redirige al login
     try:
+        logger.debug(f"ver_hoja_de_vida called: username={username}, is_authenticated={request.user.is_authenticated}")
+        
         if username:
             user_obj = get_object_or_404(User, username=username)
         elif request.user.is_authenticated:
             user_obj = request.user
         else:
             # Usuario anónimo - redirige al login
+            logger.debug("Anonymous user, redirecting to login")
             return redirect('login_user')
         
+        logger.debug(f"Getting or creating Perfil for user: {user_obj.username}")
         perfil, created = Perfil.objects.get_or_create(user=user_obj)
+        
+        if created:
+            logger.info(f"Created new Perfil for user: {user_obj.username}")
         
         context = {
             'perfil': perfil,
@@ -160,11 +176,10 @@ def ver_hoja_de_vida(request, username=None):
             'es_propietario': request.user == user_obj
         }
         
+        logger.debug(f"Rendering CV for user: {user_obj.username}")
         return render(request, 'u_hoja_de_vida.html', context)
     except Exception as e:
-        print(f"Error in ver_hoja_de_vida: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error in ver_hoja_de_vida: {str(e)}", exc_info=True)
         raise
 
 @login_required  # Esto permite que 'marti' imprima sin ser administrador
