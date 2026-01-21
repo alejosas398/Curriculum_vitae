@@ -23,6 +23,7 @@ from pagina_usuario import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('health/', views.health_check, name='health_check'),
+    path('debug/blobs/', views.debug_list_blobs, name='debug_list_blobs'),
     
     # --- RUTAS GENERALES ---
     path('', views.home, name='home'),
