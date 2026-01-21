@@ -186,7 +186,7 @@
                             </div>
                         {% endif %}
                         {% if exp.certificado %}
-                            <a href="{{ exp.certificado.url }}" target="_blank" class="small text-primary mt-2 d-inline-block"><i class="bi bi-file-pdf"></i> Descargar certificado</a>
+                            <a href="{% url 'descargar_certificado' 'experiencia' exp.id %}" class="small text-primary mt-2 d-inline-block"><i class="bi bi-file-pdf"></i> Descargar certificado</a>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -283,7 +283,7 @@
                                 </div>
                             {% endif %}
                             {% if curso.certificado %}
-                                <a href="{{ curso.certificado.url }}" target="_blank" class="small text-primary mt-1 d-inline-block"><i class="bi bi-file-pdf"></i> Descargar</a>
+                                <a href="{% url 'descargar_certificado' 'curso' curso.id %}" class="small text-primary mt-1 d-inline-block"><i class="bi bi-file-pdf"></i> Descargar</a>
                             {% endif %}
                         </div>
                         {% endif %}

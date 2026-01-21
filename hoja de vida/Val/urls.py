@@ -41,6 +41,7 @@ urlpatterns = [
     path('hoja-de-vida/', views.ver_hoja_de_vida, name='ver_cv'),
     path('hoja-de-vida/<str:username>/', views.ver_hoja_de_vida, name='ver_cv_usuario'),
     path('cv/descargar/', views.descargar_cv_pdf, name='descargar_cv_pdf'),
+    path('certificado/descargar/<str:cert_type>/<int:cert_id>/', views.descargar_certificado, name='descargar_certificado'),
     path('panel-admin/', views.panel_admin_perfil, name='panel_admin_perfil'),
 
     # --- PERFIL Y EDICIÓN ---

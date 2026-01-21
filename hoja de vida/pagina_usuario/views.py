@@ -530,3 +530,67 @@ def eliminar_curso(request, pk):
     item = get_object_or_404(Curso, pk=pk, perfil__user=request.user)
     item.delete()
     return redirect('ver_cv')
+
+@login_required
+def descargar_certificado(request, cert_type, cert_id):
+    """Descarga certificados desde Azure Blob Storage o sistema local."""
+    from django.http import FileResponse, HttpResponseNotFound
+    from pagina_usuario.azure_blob import download_blob_bytes
+    import os
+    
+    try:
+        # Obtener el objeto según el tipo
+        if cert_type == 'experiencia':
+            cert_obj = get_object_or_404(ExperienciaLaboral, pk=cert_id, perfil__user=request.user)
+        elif cert_type == 'curso':
+            cert_obj = get_object_or_404(Curso, pk=cert_id, perfil__user=request.user)
+        elif cert_type == 'recomendacion':
+            cert_obj = get_object_or_404(Recomendacion, pk=cert_id, perfil__user=request.user)
+        else:
+            return HttpResponseNotFound("Tipo de certificado inválido")
+        
+        # Verificar que existe certificado
+        if not cert_obj.certificado:
+            return HttpResponseNotFound("Certificado no encontrado")
+        
+        # Obtener el nombre del archivo
+        cert_name = cert_obj.certificado.name
+        
+        # Intentar descargar desde Azure
+        try:
+            blob_content = download_blob_bytes(cert_name)
+            if blob_content is None:
+                # Intentar con el basename
+                blob_content = download_blob_bytes(os.path.basename(cert_name))
+            
+            if blob_content:
+                response = FileResponse(
+                    iter([blob_content]),
+                    content_type='application/pdf'
+                )
+                filename = os.path.basename(cert_name)
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
+        except Exception as e:
+            import sys
+            print(f"Error descargando de Azure: {e}", file=sys.stderr)
+        
+        # Fallback: intentar desde el sistema local si existe
+        if cert_obj.certificado and hasattr(cert_obj.certificado, 'path'):
+            try:
+                response = FileResponse(
+                    open(cert_obj.certificado.path, 'rb'),
+                    content_type='application/pdf'
+                )
+                response['Content-Disposition'] = f'attachment; filename="{os.path.basename(cert_obj.certificado.path)}"'
+                return response
+            except Exception as e:
+                import sys
+                print(f"Error descargando localmente: {e}", file=sys.stderr)
+        
+        return HttpResponseNotFound("No se pudo descargar el certificado")
+    
+    except Exception as e:
+        import sys
+        print(f"Error general en descargar_certificado: {e}", file=sys.stderr)
+        return HttpResponseNotFound("Error al descargar certificado")
