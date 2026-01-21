@@ -1,2 +1,2 @@
-release: python manage.py migrate
-web: gunicorn Val.wsgi
+release: cd "hoja de vida" && python manage.py migrate
+web: gunicorn Val.wsgi --chdir "hoja de vida" --bind 0.0.0.0:$PORT
