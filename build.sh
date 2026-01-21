@@ -1,9 +1,12 @@
 #!/bin/bash
 set -o errexit
 
-cd "hoja de vida"
+# Determinar el directorio base
+if [ -d "hoja de vida" ]; then
+    cd "hoja de vida"
+    REQ_PATH="../requirements.txt"
+else
+    REQ_PATH="requirements.txt"
+fi
 
-pip install -r ../requirements.txt
-
-python manage.py collectstatic --no-input
-python manage.py migrate
+pip install -r $REQ_PATH
