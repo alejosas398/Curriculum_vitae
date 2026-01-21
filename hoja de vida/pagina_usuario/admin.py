@@ -106,6 +106,19 @@ class CursoAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Información del Curso', {
             'fields': ('perfil', 'nombre_curso', 'nombre', 'institucion', 'entidad')
+        }),
+        ('Detalles', {
+            'fields': ('descripcion', 'total_horas')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_inicio', 'fecha_fin')
+        }),
+        ('Certificado', {
+            'fields': ('certificado',)
+        }),
+        ('Estado', {
+            'fields': ('activo',)
+        }),
     )
 
 @admin.register(Recomendacion)
