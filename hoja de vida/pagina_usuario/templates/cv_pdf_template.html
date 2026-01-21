@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+            padding: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #1e293b;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+        
+        .page-wrapper {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            background: white;
+        }
+        
+        .sidebar {
+            width: 30%;
+            background-color: #f1f5f9;
+            padding: 30px 20px;
+            border-right: 1px solid #e2e8f0;
+        }
+        
+        .main-content {
+            width: 70%;
+            padding: 30px 25px;
+        }
+        
+        .profile-section {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .profile-img {
+            width: 130px;
+            height: 130px;
+            border-radius: 12px;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 0 auto 15px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .profile-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 5px;
+        }
+        
+        .profile-title {
+            font-size: 12px;
+            color: #3b82f6;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 18px;
+        }
+        
+        .sidebar-title {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        
+        .sidebar-item {
+            font-size: 9px;
+            margin-bottom: 5px;
+            color: #475569;
+            line-height: 1.4;
+        }
+        
+        .sidebar-item strong {
+            color: #0f172a;
+            display: block;
+            margin-bottom: 1px;
+        }
+        
+        .skill-badge {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 8px;
+            font-weight: 500;
+            display: inline-block;
+            margin: 3px 3px 3px 0;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3b82f6;
+            letter-spacing: 0.5px;
+        }
+        
+        .entry {
+            margin-bottom: 12px;
+            padding-left: 12px;
+            border-left: 3px solid #3b82f6;
+            position: relative;
+        }
+        
+        .entry::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 3px;
+            width: 9px;
+            height: 9px;
+            background: #3b82f6;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        .entry-title {
+            font-weight: bold;
+            font-size: 10px;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+        
+        .entry-subtitle {
+            color: #3b82f6;
+            font-size: 9px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .entry-meta {
+            font-size: 8px;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+        
+        .entry-date {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 7px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 3px;
+        }
+        
+        .entry-desc {
+            font-size: 9px;
+            color: #64748b;
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+        
+        .project-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .project-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .project-title {
+            font-weight: bold;
+            font-size: 9px;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+        
+        .badge {
+            background-color: #eff6ff;
+            color: #1e40af;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 7px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 2px 2px 2px 0;
+        }
+        
+        .badge-success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .empty-msg {
+            color: #999;
+            font-size: 8px;
+            font-style: italic;
+            margin: 5px 0;
+        }
+        
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="profile-section">
+                {% if foto_base64 %}
+                    <img src="data:image/jpeg;base64,{{ foto_base64 }}" class="profile-img" alt="Foto Perfil">
+                {% else %}
+                    <div class="profile-img" style="background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 50px; color: #999;">P</div>
+                {% endif %}
+                <div class="profile-name">{{ perfil.user.first_name }} {{ perfil.user.last_name }}</div>
+                <div class="profile-title">{{ perfil.profesion|default:"Profesional" }}</div>
+            </div>
+            
+            <!-- CONTACTO -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Contacto</div>
+                <div class="sidebar-item">
+                    <strong>Email</strong>
+                    {{ perfil.user.email }}
+                </div>
+                {% if perfil.telefono %}
+                <div class="sidebar-item">
+                    <strong>Móvil</strong>
+                    {{ perfil.telefono }}
+                </div>
+                {% endif %}
+                {% if perfil.telefono_convencional %}
+                <div class="sidebar-item">
+                    <strong>Teléfono</strong>
+                    {{ perfil.telefono_convencional }}
+                </div>
+                {% endif %}
+                {% if perfil.direccion_domicilio %}
+                <div class="sidebar-item">
+                    <strong>Dirección</strong>
+                    {{ perfil.direccion_domicilio }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- DATOS PERSONALES -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Datos Personales</div>
+                {% if perfil.cedula %}
+                <div class="sidebar-item">
+                    <strong>Cédula</strong>
+                    {{ perfil.cedula }}
+                </div>
+                {% endif %}
+                {% if perfil.sexo %}
+                <div class="sidebar-item">
+                    <strong>Sexo</strong>
+                    {% if perfil.sexo == 'H' %}Masculino{% elif perfil.sexo == 'M' %}Femenino{% else %}{{ perfil.sexo }}{% endif %}
+                </div>
+                {% endif %}
+                {% if perfil.fecha_nacimiento %}
+                <div class="sidebar-item">
+                    <strong>Nacimiento</strong>
+                    {{ perfil.fecha_nacimiento|date:"d/m/Y" }}
+                </div>
+                {% endif %}
+                {% if perfil.nacionalidad %}
+                <div class="sidebar-item">
+                    <strong>Nacionalidad</strong>
+                    {{ perfil.nacionalidad }}
+                </div>
+                {% endif %}
+                {% if perfil.estado_civil %}
+                <div class="sidebar-item">
+                    <strong>Estado Civil</strong>
+                    {{ perfil.estado_civil }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- HABILIDADES -->
+            {% if habilidades %}
+            <div class="sidebar-section">
+                <div class="sidebar-title">Habilidades</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 3px;">
+                    {% for hab in habilidades %}
+                        <span class="skill-badge">{{ hab.nombre }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- EXPERIENCIA LABORAL -->
+            <div class="section">
+                <div class="section-title">Experiencia Laboral</div>
+                {% for exp in experiencias %}
+                    {% if exp.activo %}
+                    <div class="entry">
+                        <div class="entry-title">{{ exp.puesto|default:exp.cargo }}</div>
+                        <div class="entry-subtitle">{{ exp.empresa }}</div>
+                        {% if exp.lugar_empresa %}<div class="entry-meta">{{ exp.lugar_empresa }}</div>{% endif %}
+                        <span class="entry-date">{{ exp.fecha_inicio|date:"Y" }} - {{ exp.fecha_fin|date:"Y"|default:"Actualidad" }}</span>
+                        {% if exp.descripcion %}<div class="entry-desc">{{ exp.descripcion }}</div>{% endif %}
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <div class="empty-msg">No hay historial laboral registrado</div>
+                {% endfor %}
+            </div>
+            
+            <!-- PORTAFOLIO -->
+            <div class="section">
+                <div class="section-title">Portafolio de Productos</div>
+                {% for prod in productos %}
+                    {% if prod.activo %}
+                    <div class="project-card" style="margin-bottom: 8px;">
+                        <div class="project-title">{{ prod.titulo }}</div>
+                        <span class="badge">{{ prod.tipo }}</span>
+                        {% if prod.descripcion %}<p style="font-size: 8px; margin-top: 5px; color: #64748b; line-height: 1.3;">{{ prod.descripcion }}</p>{% endif %}
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <div class="empty-msg">No se han cargado proyectos</div>
+                {% endfor %}
+            </div>
+            
+            <!-- EDUCACIÓN Y CURSOS -->
+            <div class="two-cols">
+                <div>
+                    <div class="section">
+                        <div class="section-title">Educación</div>
+                        {% for edu in educaciones %}
+                        <div class="entry">
+                            <div class="entry-title">{{ edu.titulo }}</div>
+                            <div class="entry-subtitle">{{ edu.institucion }}</div>
+                            {% if edu.estado %}<span class="badge">{{ edu.estado }}</span>{% endif %}
+                        </div>
+                        {% empty %}
+                            <div class="empty-msg">Sin datos académicos</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="section">
+                        <div class="section-title">Certificados y Cursos</div>
+                        {% for curso in cursos %}
+                        {% if curso.activo %}
+                        <div class="entry">
+                            <div class="entry-title">{{ curso.nombre|default:curso.nombre_curso }}</div>
+                            <div class="entry-subtitle">{{ curso.institucion }}</div>
+                            {% if curso.total_horas %}<div class="entry-meta">Horas: {{ curso.total_horas }}</div>{% endif %}
+                            {% if curso.fecha_inicio %}<span class="entry-date">{{ curso.fecha_inicio|date:"d/m/Y" }}{% if curso.fecha_fin %} - {{ curso.fecha_fin|date:"d/m/Y" }}{% endif %}</span>{% endif %}
+                        </div>
+                        {% endif %}
+                        {% empty %}
+                            <div class="empty-msg">Sin certificaciones</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RECONOCIMIENTOS -->
+            <div class="section">
+                <div class="section-title">Reconocimientos</div>
+                {% for reco in recomendaciones %}
+                {% if reco.activo %}
+                <div class="project-card" style="margin-bottom: 8px;">
+                    <div class="project-title">{{ reco.nombre_contacto }}</div>
+                    {% if reco.tipo_reconocimiento %}<span class="badge badge-success">{{ reco.tipo_reconocimiento }}</span>{% endif %}
+                    {% if reco.entidad_patrocinadora %}<div style="font-size: 8px; margin-top: 4px; color: #64748b;"><strong>Entidad:</strong> {{ reco.entidad_patrocinadora }}</div>{% endif %}
+                </div>
+                {% endif %}
+                {% empty %}
+                    <div class="empty-msg">Sin reconocimientos registrados</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

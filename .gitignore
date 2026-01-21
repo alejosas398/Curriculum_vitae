@@ -1,0 +1,17 @@
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Ignorar solo el cache de las migraciones, NO las migraciones
+**/migrations/__pycache__/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+ENV/

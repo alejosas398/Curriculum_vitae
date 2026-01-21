@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Neural Protocol | Control System{% endblock %}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            --menu-blue: #1e293b;        /* Azul medianoche profesional */
+            --emerald-accent: #10b981;    /* Verde esmeralda */
+            --body-bg: #f1f5f9;          /* Gris muy claro */
+            --text-primary: #0f172a;     /* Texto legible */
+            --text-secondary: #475569;   /* Texto secundario */
+        }
+
+        body {
+            background-color: var(--body-bg);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* --- NAVBAR ESTILO ADMIN --- */
+        .navbar {
+            background-color: var(--menu-blue) !important;
+            padding: 0.8rem 0;
+            border-bottom: 4px solid var(--emerald-accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            color: #ffffff !important;
+        }
+
+        .logo-icon {
+            background: var(--emerald-accent);
+            color: var(--menu-blue);
+            padding: 5px 8px;
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+
+        .nav-link {
+            color: #e2e8f0 !important;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--emerald-accent) !important;
+        }
+
+        /* --- DROPDOWN PERFIL --- */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 10px;
+            background: #ffffff;
+        }
+
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8fafc;
+            color: var(--emerald-accent);
+        }
+
+        .dropdown-item i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--emerald-accent);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* --- BOTONES --- */
+        .btn-emerald {
+            background-color: var(--emerald-accent);
+            color: white !important;
+            font-weight: 700;
+            border-radius: 50px;
+            padding: 8px 20px;
+            border: none;
+        }
+
+        .main-wrapper { flex-grow: 1; padding: 40px 0; }
+        footer { background: #e2e8f0; padding: 25px 0; text-align: center; border-top: 1px solid #cbd5e1; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <span class="logo-icon"><i class="bi bi-cpu-fill"></i></span>
+                    <span>NEURAL<span style="color: var(--emerald-accent)">PROTOCOL</span></span>
+                </a>
+
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                    <i class="bi bi-list fs-1 text-white"></i>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        {% if user.is_authenticated %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'tasks' %}"><i class="bi bi-grid-1x2 me-1"></i> Tareas</a>
+                            </li>
+                            
+                            <li class="nav-item dropdown ms-lg-3">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
+                                    <span class="d-none d-lg-inline">{{ user.username }}</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><h6 class="dropdown-header font-monospace small">USER_SESSION: ACTIVE</h6></li>
+                                    <li><a class="dropdown-item" href="{% url 'ver_cv' %}"><i class="bi bi-person-badge"></i> Mi Perfil / CV</a></li>
+                                    <li><a class="dropdown-item text-info fw-bold" href="/admin/"><i class="bi bi-gear-fill"></i> 🔧 Admin Panel</a></li>
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form action="{% url 'logout' %}" method="POST" class="m-0">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="bi bi-box-arrow-right"></i> Finalizar Sesión
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'login_user' %}">Acceso</a>
+                            </li>
+                            <li class="nav-item ms-lg-2">
+                                <a class="btn btn-emerald" href="{% url 'signup' %}">Registrarse</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <main class="main-wrapper">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p class="fw-bold mb-1 text-dark">NEURAL PROTOCOL CORE</p>
+            <p class="small mb-0 opacity-75">&copy; 2026 Protocolo de Gestión Operativa.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión - Task Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 60vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card card-body">
+            <div class="text-center mb-4">
+                <i class="bi bi-box-arrow-in-right" style="font-size: 3rem; color: #4f46e5;"></i>
+                <h1 class="h3 mt-3 mb-2">Iniciar Sesión</h1>
+                <p class="text-muted small">Accede a tu cuenta</p>
+            </div>
+
+            {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endif %}
+
+            <form action="{% url 'login_user' %}" method="POST">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.username.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.password.label_tag }}
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.password.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid gap-2 mt-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
+                    </button>
+                </div>
+            </form>
+
+            <hr class="my-4">
+            
+            <div class="text-center">
+                <small class="text-muted">
+                    ¿No tienes cuenta? 
+                    <a href="{% url 'signup' %}" class="fw-bold">Regístrate aquí</a>
+                </small>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house me-1"></i>Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

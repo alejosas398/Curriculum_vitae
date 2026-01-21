@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    :root {
+        --primary-dark: #0f172a;
+        --accent-color: #3b82f6;
+        --bg-soft: #f8fafc;
+    }
+    
+    body { background-color: var(--bg-soft); }
+    
+    .panel-header {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--accent-color) 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 16px;
+        margin-bottom: 30px;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--accent-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .item-row:last-child { margin-bottom: 0; }
+    
+    .item-name {
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+    
+    .item-meta {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+    
+    .btn-action {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+        margin-left: 10px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: #94a3b8;
+    }
+    
+    .add-btn-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .section-count {
+        background: var(--accent-color);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="panel-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2"><i class="bi bi-gear-fill me-2"></i>Panel de Administración</h2>
+                <p class="mb-0 opacity-75">Gestiona y personaliza tu Hoja de Vida</p>
+            </div>
+            <a href="{% url 'ver_cv' %}" class="btn btn-light rounded-pill">
+                <i class="bi bi-eye me-2"></i>Ver Mi CV
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- PERFIL -->
+            <div class="section-card">
+                <div class="add-btn-section">
+                    <div class="section-title">
+                        <i class="bi bi-person-circle" style="font-size: 1.5rem; color: #ec4899;"></i>
+                        Perfil Personal
+                    </div>
+                    <a href="{% url 'edit_perfil' %}" class="btn btn-sm btn-primary rounded-pill">
+                        <i class="bi bi-pencil-square"></i> Editar
+                    </a>
+                </div>
+                <div class="item-row">
+                    <div>
+                        <div class="item-name">{{ perfil.user.first_name }} {{ perfil.user.last_name }}</div>
+                        <div class="item-meta">{{ perfil.profesion|default:"Profesión no definida" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPERIENCIAS -->
+            <div class="section-card">
+                <div class="add-btn-section">
+                    <div class="section-title">
+                        <i class="bi bi-briefcase" style="font-size: 1.5rem; color: #3b82f6;"></i>
+                        Experiencia Laboral
+                        <span class="section-count">{{ experiencias|length }}</span>
+                    </div>
+                    <a href="{% url 'add_experiencia' %}" class="btn btn-sm btn-success rounded-pill">
+                        <i class="bi bi-plus-lg"></i> Añadir
+                    </a>
+                </div>
+                {% if experiencias %}
+                    {% for exp in experiencias %}
+                    <div class="item-row">
+                        <div>
+                            <div class="item-name">{{ exp.puesto|default:exp.cargo }}</div>
+                            <div class="item-meta">{{ exp.empresa }} • {{ exp.fecha_inicio|date:"Y" }} - {{ exp.fecha_fin|date:"Y"|default:"Actualidad" }}</div>
+                        </div>
+                        <a href="#" class="btn btn-sm btn-outline-secondary btn-action" onclick="alert('Editar próximamente')">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                        Sin experiencias. <a href="{% url 'add_experiencia' %}" class="text-primary">Añadir una</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- EDUCACIÓN -->
+            <div class="section-card">
+                <div class="add-btn-section">
+                    <div class="section-title">
+                        <i class="bi bi-book" style="font-size: 1.5rem; color: #8b5cf6;"></i>
+                        Educación
+                        <span class="section-count">{{ educaciones|length }}</span>
+                    </div>
+                    <a href="{% url 'add_educacion' %}" class="btn btn-sm btn-success rounded-pill">
+                        <i class="bi bi-plus-lg"></i> Añadir
+                    </a>
+                </div>
+                {% if educaciones %}
+                    {% for edu in educaciones %}
+                    <div class="item-row">
+                        <div>
+                            <div class="item-name">{{ edu.titulo }}</div>
+                            <div class="item-meta">{{ edu.institucion }} • {{ edu.estado }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                        Sin educación registrada. <a href="{% url 'add_educacion' %}" class="text-primary">Añadir</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- CURSOS -->
+            <div class="section-card">
+                <div class="add-btn-section">
+                    <div class="section-title">
+                        <i class="bi bi-patch-check" style="font-size: 1.5rem; color: #f59e0b;"></i>
+                        Cursos y Certificados
+                        <span class="section-count">{{ cursos|length }}</span>
+                    </div>
+                    <a href="{% url 'add_curso' %}" class="btn btn-sm btn-success rounded-pill">
+                        <i class="bi bi-plus-lg"></i> Añadir
+                    </a>
+                </div>
+                {% if cursos %}
+                    {% for curso in cursos %}
+                    <div class="item-row">
+                        <div>
+                            <div class="item-name">{{ curso.nombre|default:curso.nombre_curso }}</div>
+                            <div class="item-meta">{{ curso.institucion }} • {{ curso.total_horas }} horas</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                        Sin cursos registrados. <a href="{% url 'add_curso' %}" class="text-primary">Añadir</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- PRODUCTOS/PROYECTOS -->
+            <div class="section-card">
+                <div class="add-btn-section">
+                    <div class="section-title">
+                        <i class="bi bi-lightbulb" style="font-size: 1.5rem; color: #10b981;"></i>
+                        Proyectos y Productos
+                        <span class="section-count">{{ productos|length }}</span>
+                    </div>
+                    <a href="{% url 'add_productos' %}" class="btn btn-sm btn-success rounded-pill">
+                        <i class="bi bi-plus-lg"></i> Añadir
+                    </a>
+                </div>
+                {% if productos %}
+                    {% for prod in productos %}
+                    <div class="item-row">
+                        <div>
+                            <div class="item-name">{{ prod.titulo }}</div>
+                            <div class="item-meta">{{ prod.tipo }} • {{ prod.clasificador }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                        Sin proyectos. <a href="{% url 'add_productos' %}" class="text-primary">Añadir</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- RECOMENDACIONES -->
+            <div class="section-card">
+                <div class="add-btn-section">
+                    <div class="section-title">
+                        <i class="bi bi-award" style="font-size: 1.5rem; color: #06b6d4;"></i>
+                        Reconocimientos
+                        <span class="section-count">{{ recomendaciones|length }}</span>
+                    </div>
+                    <a href="{% url 'add_recomendacion' %}" class="btn btn-sm btn-success rounded-pill">
+                        <i class="bi bi-plus-lg"></i> Añadir
+                    </a>
+                </div>
+                {% if recomendaciones %}
+                    {% for reco in recomendaciones %}
+                    <div class="item-row">
+                        <div>
+                            <div class="item-name">{{ reco.nombre_contacto }}</div>
+                            <div class="item-meta">{{ reco.tipo_reconocimiento }} • {{ reco.entidad_patrocinadora }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                        Sin reconocimientos. <a href="{% url 'add_recomendacion' %}" class="text-primary">Añadir</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- HABILIDADES -->
+            <div class="section-card">
+                <div class="add-btn-section">
+                    <div class="section-title">
+                        <i class="bi bi-star" style="font-size: 1.5rem; color: #f97316;"></i>
+                        Habilidades
+                        <span class="section-count">{{ habilidades|length }}</span>
+                    </div>
+                    <a href="{% url 'add_habilidad' %}" class="btn btn-sm btn-success rounded-pill">
+                        <i class="bi bi-plus-lg"></i> Añadir
+                    </a>
+                </div>
+                {% if habilidades %}
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for hab in habilidades %}
+                        <span class="badge bg-light text-dark border px-3 py-2">{{ hab.nombre }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                        Sin habilidades. <a href="{% url 'add_habilidad' %}" class="text-primary">Añadir</a>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- SIDEBAR - RESUMEN -->
+        <div class="col-lg-4">
+            <div class="section-card sticky-top" style="top: 20px;">
+                <div class="section-title">
+                    <i class="bi bi-graph-up"></i>
+                    Resumen del CV
+                </div>
+                <div style="list-style: none; padding: 0; margin: 0;">
+                    <div class="item-row" style="background: transparent; border-bottom: 1px solid #e2e8f0;">
+                        <span>Perfil</span>
+                        <span class="section-count">1</span>
+                    </div>
+                    <div class="item-row" style="background: transparent; border-bottom: 1px solid #e2e8f0;">
+                        <span>Experiencias</span>
+                        <span class="section-count">{{ experiencias|length }}</span>
+                    </div>
+                    <div class="item-row" style="background: transparent; border-bottom: 1px solid #e2e8f0;">
+                        <span>Educación</span>
+                        <span class="section-count">{{ educaciones|length }}</span>
+                    </div>
+                    <div class="item-row" style="background: transparent; border-bottom: 1px solid #e2e8f0;">
+                        <span>Cursos</span>
+                        <span class="section-count">{{ cursos|length }}</span>
+                    </div>
+                    <div class="item-row" style="background: transparent; border-bottom: 1px solid #e2e8f0;">
+                        <span>Proyectos</span>
+                        <span class="section-count">{{ productos|length }}</span>
+                    </div>
+                    <div class="item-row" style="background: transparent; border-bottom: 1px solid #e2e8f0;">
+                        <span>Reconocimientos</span>
+                        <span class="section-count">{{ recomendaciones|length }}</span>
+                    </div>
+                    <div class="item-row" style="background: transparent;">
+                        <span>Habilidades</span>
+                        <span class="section-count">{{ habilidades|length }}</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+                    <a href="{% url 'ver_cv' %}" class="btn btn-primary w-100 rounded-pill mb-2">
+                        <i class="bi bi-eye me-2"></i>Ver Mi CV
+                    </a>
+                    <a href="{% url 'descargar_cv_pdf' %}" class="btn btn-outline-danger w-100 rounded-pill">
+                        <i class="bi bi-file-pdf me-2"></i>Descargar PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
