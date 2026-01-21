@@ -177,10 +177,33 @@ def ver_hoja_de_vida(request, username=None):
         }
         
         logger.debug(f"Rendering CV for user: {user_obj.username}")
+        # Usa la template original - si falla pasará a la excepción
         return render(request, 'u_hoja_de_vida.html', context)
     except Exception as e:
         logger.error(f"Error in ver_hoja_de_vida: {str(e)}", exc_info=True)
-        raise
+        # Si hay error, retorna una versión simple
+        try:
+            if username:
+                user_obj = get_object_or_404(User, username=username)
+            elif request.user.is_authenticated:
+                user_obj = request.user
+            else:
+                return redirect('login_user')
+            
+            perfil, created = Perfil.objects.get_or_create(user=user_obj)
+            
+            context = {
+                'perfil': perfil,
+                'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
+                'educaciones': perfil.educaciones.all(),
+                'habilidades': perfil.habilidades.all(),
+                'es_propietario': request.user == user_obj
+            }
+            logger.info("Falling back to simple template")
+            return render(request, 'u_hoja_de_vida_simple.html', context)
+        except Exception as e2:
+            logger.error(f"Critical error in ver_hoja_de_vida fallback: {str(e2)}", exc_info=True)
+            raise
 
 @login_required  # Esto permite que 'marti' imprima sin ser administrador
 def descargar_cv_pdf(request):

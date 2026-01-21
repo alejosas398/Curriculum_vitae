@@ -19,7 +19,7 @@ class Perfil(models.Model):
     descripcion = models.CharField(max_length=100, blank=True, default='', verbose_name='Descripción del perfil')
     activo = models.BooleanField(default=True, verbose_name='Perfil activo')
     lugar_nacimiento = models.CharField(max_length=60, blank=True, default='')
-    cedula = models.CharField(max_length=10, unique=True)
+    cedula = models.CharField(max_length=10, unique=True, blank=True, null=True)
     profesion = models.CharField(max_length=100, blank=True)
     telefono = models.CharField(max_length=15, blank=True, verbose_name='Teléfono celular')
     telefono_convencional = models.CharField(max_length=15, blank=True, default='')
@@ -33,6 +33,8 @@ class Perfil(models.Model):
     licencia_conducir = models.CharField(max_length=50, blank=True)
     sitio_web = models.CharField(max_length=100, blank=True, default='', verbose_name='Sitio web')
     foto = models.ImageField(upload_to='perfil_fotos/', null=True, blank=True)
+    resumen_profesional = models.TextField(blank=True, default='')
+    nombre_completo = models.CharField(max_length=200, blank=True, default='')
     
     class Meta:
         verbose_name = 'Perfil'

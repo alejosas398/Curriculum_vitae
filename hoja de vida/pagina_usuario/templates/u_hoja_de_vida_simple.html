@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi CV - Hoja de Vida{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h1>Mi Hoja de Vida</h1>
+                    
+                    {% if perfil %}
+                        <h2>{{ perfil.nombre_completo }}</h2>
+                        <p>{{ perfil.resumen_profesional }}</p>
+                        
+                        <hr>
+                        
+                        <h3>Experiencia</h3>
+                        {% for exp in experiencias %}
+                            <div class="mb-3">
+                                <strong>{{ exp.empresa }} - {{ exp.cargo }}</strong>
+                                <p>{{ exp.fecha_inicio|date:"d/m/Y" }} - {% if exp.fecha_fin %}{{ exp.fecha_fin|date:"d/m/Y" }}{% else %}Actualmente{% endif %}</p>
+                                <p>{{ exp.descripcion }}</p>
+                            </div>
+                        {% empty %}
+                            <p>No hay experiencia registrada</p>
+                        {% endfor %}
+                        
+                        <hr>
+                        
+                        <h3>Educación</h3>
+                        {% for edu in educaciones %}
+                            <div class="mb-3">
+                                <strong>{{ edu.titulo }}</strong>
+                                <p>{{ edu.institucion }}</p>
+                            </div>
+                        {% empty %}
+                            <p>No hay educación registrada</p>
+                        {% endfor %}
+                        
+                        <hr>
+                        
+                        <h3>Habilidades</h3>
+                        <div>
+                            {% for hab in habilidades %}
+                                <span class="badge bg-primary">{{ hab.nombre }}</span>
+                            {% empty %}
+                                <p>No hay habilidades registradas</p>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if es_propietario %}
+                            <hr>
+                            <div class="mt-4">
+                                <a href="{% url 'descargar_cv_pdf' %}" class="btn btn-primary">Descargar PDF</a>
+                                <a href="{% url 'edit_perfil' %}" class="btn btn-secondary">Editar Perfil</a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p>No hay perfil disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
