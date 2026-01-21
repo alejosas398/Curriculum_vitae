@@ -1,1 +1,1 @@
-web: gunicorn Val.wsgi --bind 0.0.0.0:$PORT --chdir hoja\ de\ vida
+web: gunicorn Val.wsgi --chdir "hoja de vida"
