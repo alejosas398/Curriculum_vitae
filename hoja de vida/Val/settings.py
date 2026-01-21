@@ -120,7 +120,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # --- REDIRECCIONES ---
 LOGIN_URL = 'login_user'
-LOGIN_REDIRECT_URL = 'ver_cv'
+LOGIN_REDIRECT_URL = 'tasks'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

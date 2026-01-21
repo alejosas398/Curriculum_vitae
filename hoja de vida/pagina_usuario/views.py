@@ -137,29 +137,33 @@ def panel_admin_perfil(request):
 def ver_hoja_de_vida(request, username=None):
     # Si username está especificado, usa ese, si no y usuario está autenticado, usa su perfil
     # Si es anónimo, muestra el perfil de 'marti' por defecto
-    if username:
-        user_obj = get_object_or_404(User, username=username)
-    elif request.user.is_authenticated:
-        user_obj = request.user
-    else:
-        # Usuario anónimo - muestra el perfil de 'marti' por defecto
-        user_obj = get_object_or_404(User, username='marti')
-    
-    perfil, created = Perfil.objects.get_or_create(user=user_obj)
-    
-    context = {
-        'perfil': perfil,
-        'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
-        'educaciones': perfil.educaciones.all(),
-        'habilidades': perfil.habilidades.all(),
-        'cursos': perfil.cursos.all(),
-        'proyectos_productos': perfil.productos.all(),
-        'recomendaciones': perfil.recomendaciones.all(),
-        'ventas_garage': perfil.ventas_garage.all(),
-        'es_propietario': request.user == user_obj
-    }
-    
-    return render(request, 'u_hoja_de_vida.html', context)
+    try:
+        if username:
+            user_obj = get_object_or_404(User, username=username)
+        elif request.user.is_authenticated:
+            user_obj = request.user
+        else:
+            # Usuario anónimo - muestra el perfil de 'marti' por defecto
+            user_obj = get_object_or_404(User, username='marti')
+        
+        perfil, created = Perfil.objects.get_or_create(user=user_obj)
+        
+        context = {
+            'perfil': perfil,
+            'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
+            'educaciones': perfil.educaciones.all(),
+            'habilidades': perfil.habilidades.all(),
+            'cursos': perfil.cursos.all(),
+            'proyectos_productos': perfil.productos.all(),
+            'recomendaciones': perfil.recomendaciones.all(),
+            'ventas_garage': perfil.ventas_garage.all(),
+            'es_propietario': request.user == user_obj
+        }
+        
+        return render(request, 'u_hoja_de_vida.html', context)
+    except Exception as e:
+        print(f"Error in ver_hoja_de_vida: {e}")
+        raise
 
 @login_required  # Esto permite que 'marti' imprima sin ser administrador
 def descargar_cv_pdf(request):
