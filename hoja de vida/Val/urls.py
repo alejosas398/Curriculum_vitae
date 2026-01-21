@@ -22,6 +22,7 @@ from pagina_usuario import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('health/', views.health_check, name='health_check'),
     
     # --- RUTAS GENERALES ---
     path('', views.home, name='home'),

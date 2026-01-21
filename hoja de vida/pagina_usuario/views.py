@@ -6,8 +6,9 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import get_template
+from django.conf import settings
 from weasyprint import HTML, CSS
 from io import BytesIO
 import os
@@ -31,6 +32,36 @@ from .forms import (
 logger = logging.getLogger(__name__)
 
 # --- VISTAS DE AUTENTICACIÓN ---
+
+def health_check(request):
+    """Endpoint para diagnosticar problemas en Render"""
+    import json
+    from django.db import connection
+    
+    try:
+        # Verificar conexión a BD
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        db_status = "✅ BD conectada"
+    except Exception as e:
+        db_status = f"❌ Error BD: {str(e)}"
+    
+    try:
+        # Verificar usuarios
+        user_count = User.objects.count()
+        perfil_count = Perfil.objects.count()
+    except Exception as e:
+        user_count = f"Error: {str(e)}"
+        perfil_count = "Error"
+    
+    response = {
+        "status": "OK",
+        "database": db_status,
+        "users": user_count,
+        "perfils": perfil_count,
+        "debug": settings.DEBUG
+    }
+    return JsonResponse(response)
 
 def home(request):
     return render(request, "home.html")
