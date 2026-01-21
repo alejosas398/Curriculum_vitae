@@ -588,26 +588,38 @@ def descargar_certificado(request, cert_type, cert_id):
         cert_name = cert_obj.certificado.name
         logger.info(f"Intentando descargar certificado: {cert_name}")
         
-        # Intentar descargar desde Azure
+        # Intentar descargar desde Azure con diferentes prefijos
         blob_content = None
+        basename = os.path.basename(cert_name)
         
-        # Primero intentar con el nombre completo
-        try:
-            blob_content = download_blob_bytes(cert_name)
-            if blob_content:
-                logger.info(f"✓ Certificado descargado desde Azure (nombre completo): {cert_name}")
-        except Exception as e:
-            logger.warning(f"Error con nombre completo '{cert_name}': {e}")
+        # Definir prefijos según el tipo
+        prefixes_to_try = [
+            cert_name,  # Nombre original
+            basename,   # Solo el nombre
+        ]
         
-        # Si falla, intentar con solo el basename
-        if not blob_content:
-            basename = os.path.basename(cert_name)
+        # Agregar prefijos específicos del tipo
+        if cert_type == 'curso':
+            prefixes_to_try.extend([
+                f'cursos/certificados/{basename}',
+                f'cursos/{basename}',
+            ])
+        elif cert_type == 'experiencia':
+            prefixes_to_try.extend([
+                f'experiencia/certificados/{basename}',
+                f'experiencia/{basename}',
+            ])
+        
+        # Intentar con cada prefijo
+        for prefix in prefixes_to_try:
             try:
-                blob_content = download_blob_bytes(basename)
+                blob_content = download_blob_bytes(prefix)
                 if blob_content:
-                    logger.info(f"✓ Certificado descargado desde Azure (basename): {basename}")
+                    logger.info(f"✓ Certificado descargado desde Azure: {prefix}")
+                    break
             except Exception as e:
-                logger.warning(f"Error con basename '{basename}': {e}")
+                logger.debug(f"No encontrado con prefijo '{prefix}': {e}")
+                continue
         
         # Si logró obtener desde Azure, retornar
         if blob_content:
@@ -615,11 +627,10 @@ def descargar_certificado(request, cert_type, cert_id):
                 iter([blob_content]),
                 content_type='application/pdf'
             )
-            filename = os.path.basename(cert_name)
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Disposition'] = f'attachment; filename="{basename}"'
             return response
         else:
-            logger.error(f"No se pudo descargar de Azure. Intenté con: {cert_name} y {os.path.basename(cert_name)}")
+            logger.error(f"No se pudo descargar de Azure. Intenté con prefijos: {prefixes_to_try}")
         
         # Fallback: intentar desde el sistema local si existe
         if cert_obj.certificado and hasattr(cert_obj.certificado, 'path'):
