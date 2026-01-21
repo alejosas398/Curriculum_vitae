@@ -136,15 +136,15 @@ def panel_admin_perfil(request):
 
 def ver_hoja_de_vida(request, username=None):
     # Si username está especificado, usa ese, si no y usuario está autenticado, usa su perfil
-    # Si es anónimo, muestra el perfil de 'marti' por defecto
+    # Si es anónimo, redirige al login
     try:
         if username:
             user_obj = get_object_or_404(User, username=username)
         elif request.user.is_authenticated:
             user_obj = request.user
         else:
-            # Usuario anónimo - muestra el perfil de 'marti' por defecto
-            user_obj = get_object_or_404(User, username='marti')
+            # Usuario anónimo - redirige al login
+            return redirect('login_user')
         
         perfil, created = Perfil.objects.get_or_create(user=user_obj)
         
@@ -163,6 +163,8 @@ def ver_hoja_de_vida(request, username=None):
         return render(request, 'u_hoja_de_vida.html', context)
     except Exception as e:
         print(f"Error in ver_hoja_de_vida: {e}")
+        import traceback
+        traceback.print_exc()
         raise
 
 @login_required  # Esto permite que 'marti' imprima sin ser administrador
