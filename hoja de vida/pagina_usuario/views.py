@@ -537,6 +537,9 @@ def descargar_certificado(request, cert_type, cert_id):
     from django.http import FileResponse, HttpResponseNotFound
     from pagina_usuario.azure_blob import download_blob_bytes
     import os
+    import logging
+    
+    logger = logging.getLogger(__name__)
     
     try:
         # Obtener el objeto según el tipo
@@ -551,46 +554,64 @@ def descargar_certificado(request, cert_type, cert_id):
         
         # Verificar que existe certificado
         if not cert_obj.certificado:
+            logger.error(f"Certificado no encontrado para {cert_type} {cert_id}")
             return HttpResponseNotFound("Certificado no encontrado")
         
         # Obtener el nombre del archivo
         cert_name = cert_obj.certificado.name
+        logger.info(f"Intentando descargar certificado: {cert_name}")
         
         # Intentar descargar desde Azure
+        blob_content = None
+        
+        # Primero intentar con el nombre completo
         try:
             blob_content = download_blob_bytes(cert_name)
-            if blob_content is None:
-                # Intentar con el basename
-                blob_content = download_blob_bytes(os.path.basename(cert_name))
-            
             if blob_content:
-                response = FileResponse(
-                    iter([blob_content]),
-                    content_type='application/pdf'
-                )
-                filename = os.path.basename(cert_name)
-                response['Content-Disposition'] = f'attachment; filename="{filename}"'
-                return response
+                logger.info(f"✓ Certificado descargado desde Azure (nombre completo): {cert_name}")
         except Exception as e:
-            import sys
-            print(f"Error descargando de Azure: {e}", file=sys.stderr)
+            logger.warning(f"Error con nombre completo '{cert_name}': {e}")
+        
+        # Si falla, intentar con solo el basename
+        if not blob_content:
+            basename = os.path.basename(cert_name)
+            try:
+                blob_content = download_blob_bytes(basename)
+                if blob_content:
+                    logger.info(f"✓ Certificado descargado desde Azure (basename): {basename}")
+            except Exception as e:
+                logger.warning(f"Error con basename '{basename}': {e}")
+        
+        # Si logró obtener desde Azure, retornar
+        if blob_content:
+            response = FileResponse(
+                iter([blob_content]),
+                content_type='application/pdf'
+            )
+            filename = os.path.basename(cert_name)
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        else:
+            logger.error(f"No se pudo descargar de Azure. Intenté con: {cert_name} y {os.path.basename(cert_name)}")
         
         # Fallback: intentar desde el sistema local si existe
         if cert_obj.certificado and hasattr(cert_obj.certificado, 'path'):
             try:
+                logger.info(f"Intentando descargar localmente desde: {cert_obj.certificado.path}")
                 response = FileResponse(
                     open(cert_obj.certificado.path, 'rb'),
                     content_type='application/pdf'
                 )
                 response['Content-Disposition'] = f'attachment; filename="{os.path.basename(cert_obj.certificado.path)}"'
+                logger.info(f"✓ Certificado descargado localmente")
                 return response
             except Exception as e:
-                import sys
-                print(f"Error descargando localmente: {e}", file=sys.stderr)
+                logger.warning(f"Error descargando localmente: {e}")
         
+        logger.error(f"No se pudo descargar el certificado {cert_type} {cert_id}")
         return HttpResponseNotFound("No se pudo descargar el certificado")
     
     except Exception as e:
-        import sys
-        print(f"Error general en descargar_certificado: {e}", file=sys.stderr)
+        logger.exception(f"Error general en descargar_certificado: {e}")
+        return HttpResponseNotFound("Error al descargar certificado")
         return HttpResponseNotFound("Error al descargar certificado")
