@@ -46,10 +46,8 @@ class PerfilAdmin(admin.ModelAdmin):
     readonly_fields = ('user',)
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver todos los perfiles, usuarios normales solo el suyo"""
+        """Todos los usuarios solo pueden ver su propio perfil"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(user=request.user)
 
 
@@ -58,10 +56,8 @@ class HabilidadAdmin(admin.ModelAdmin):
     list_display = ('nombre',)
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver todas las habilidades, usuarios normales solo las suyas"""
+        """Todos los usuarios solo pueden ver sus propias habilidades"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(perfil__user=request.user)
 
 
@@ -72,10 +68,8 @@ class TaskAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description')
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver todas las tareas, usuarios normales solo las suyas"""
+        """Todos los usuarios solo pueden ver sus propias tareas"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(user=request.user)
 
 
@@ -103,10 +97,8 @@ class ExperienciaAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver todas las experiencias, usuarios normales solo las suyas"""
+        """Todos los usuarios solo pueden ver sus propias experiencias"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(perfil__user=request.user)
 
 @admin.register(Educacion)
@@ -127,10 +119,8 @@ class EducacionAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver toda la educación, usuarios normales solo la suya"""
+        """Todos los usuarios solo pueden ver su propia educación"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(perfil__user=request.user)
 
 @admin.register(Curso)
@@ -157,10 +147,8 @@ class CursoAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver todos los cursos, usuarios normales solo los suyos"""
+        """Todos los usuarios solo pueden ver sus propios cursos"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(perfil__user=request.user)
 
 @admin.register(Recomendacion)
@@ -187,10 +175,8 @@ class RecomendacionAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver todas las recomendaciones, usuarios normales solo las suyas"""
+        """Todos los usuarios solo pueden ver sus propias recomendaciones"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(perfil__user=request.user)
 
 @admin.register(Productos)
@@ -211,10 +197,8 @@ class ProductosAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver todos los productos, usuarios normales solo los suyos"""
+        """Todos los usuarios solo pueden ver sus propios productos"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(perfil__user=request.user)
 
 @admin.register(VentaGarage)
@@ -235,8 +219,6 @@ class VentaGarageAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        """Superusuarios pueden ver todas las ventas garage, usuarios normales solo las suyas"""
+        """Todos los usuarios solo pueden ver sus propias ventas garage"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         return qs.filter(perfil__user=request.user)

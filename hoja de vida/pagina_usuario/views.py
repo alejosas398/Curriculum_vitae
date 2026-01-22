@@ -210,37 +210,32 @@ def panel_admin_perfil(request):
     return render(request, 'panel_admin_perfil.html', context)
 
 def ver_hoja_de_vida(request, username=None):
-    # Si username está especificado, usa ese, si no y usuario está autenticado, usa su perfil
-    # Si es anónimo, redirige al login
-    try:
-        logger.debug(f"ver_hoja_de_vida called: username={username}, is_authenticated={request.user.is_authenticated}")
-        
-        if username:
-            user_obj = get_object_or_404(User, username=username)
-        elif request.user.is_authenticated:
-            user_obj = request.user
-        else:
-            # Usuario anónimo - redirige al login
-            logger.debug("Anonymous user, redirecting to login")
-            return redirect('login_user')
-        
-        logger.debug(f"Getting or creating Perfil for user: {user_obj.username}")
-        perfil, created = Perfil.objects.get_or_create(user=user_obj)
-        
-        if created:
-            logger.info(f"Created new Perfil for user: {user_obj.username}")
-        
-        context = {
-            'perfil': perfil,
-            'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
-            'educaciones': perfil.educaciones.all(),
-            'habilidades': perfil.habilidades.all(),
-            'cursos': perfil.cursos.all(),
-            'proyectos_productos': perfil.productos.all(),
-            'recomendaciones': perfil.recomendaciones.all(),
-            'ventas_garage': perfil.ventas_garage.all(),
-            'es_propietario': request.user == user_obj
-        }
+    # PRIVACIDAD: Solo permite ver el CV propio, ignora el parámetro username
+    if not request.user.is_authenticated:
+        # Usuario anónimo - redirige al login
+        logger.debug("Anonymous user, redirecting to login")
+        return redirect('login_user')
+
+    # Siempre usa el perfil del usuario logueado (propietario)
+    user_obj = request.user
+    logger.debug(f"Showing CV for user: {user_obj.username}")
+
+    perfil, created = Perfil.objects.get_or_create(user=user_obj)
+
+    if created:
+        logger.info(f"Created new Perfil for user: {user_obj.username}")
+
+    context = {
+        'perfil': perfil,
+        'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
+        'educaciones': perfil.educaciones.all(),
+        'habilidades': perfil.habilidades.all(),
+        'cursos': perfil.cursos.all(),
+        'proyectos_productos': perfil.productos.all(),
+        'recomendaciones': perfil.recomendaciones.all(),
+        'ventas_garage': perfil.ventas_garage.all(),
+        'es_propietario': True  # Siempre es propietario de su propio CV
+    }
         
         logger.debug(f"Rendering CV for user: {user_obj.username}")
         # Usa la template original - si falla pasará a la excepción
