@@ -81,7 +81,16 @@ Después de aplicar esta solución:
 - ✅ Todos los usuarios pueden ver su CV (con datos de ejemplo si está vacío)
 - ✅ Todos los usuarios pueden editar su información
 - ✅ Los botones de "Añadir" y "Editar" aparecen para todos los usuarios autenticados
+- ✅ Cada usuario tiene su propio admin independiente con acceso solo a sus datos
 - ✅ No hay más diferencias entre usuarios existentes y nuevos
+
+### Funcionalidad del Admin Independiente
+
+Cada usuario con permisos de superusuario ahora tiene:
+- ✅ Acceso completo al panel `/admin/`
+- ✅ Visibilidad solo de sus propios registros (perfiles, experiencias, educación, etc.)
+- ✅ Capacidad para crear, editar y eliminar solo su propio contenido
+- ✅ Interfaz administrativa personalizada y segura
 
 ## Verificación
 
