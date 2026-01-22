@@ -149,3 +149,4 @@ class Command(BaseCommand):
                 descripcion="Excelente estudiante con gran capacidad de aprendizaje.",
                 activo=True
             )
+

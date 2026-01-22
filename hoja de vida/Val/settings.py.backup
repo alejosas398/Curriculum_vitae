@@ -18,19 +18,20 @@ from decouple import config, Csv
 # Rutas del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- CONFIGURACIÓN DE SEGURIDAD ---
-# Se añade un valor por defecto para evitar el error UndefinedValueError
+# --- CONFIGURACIÃ“N DE SEGURIDAD ---
+# Se aÃ±ade un valor por defecto para evitar el error UndefinedValueError
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key-change-this')
 
-# DEBUG es True en local y False en Render (Producción)
+# DEBUG es True en local y False en Render (ProducciÃ³n)
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,curriculum-vitae-485k.onrender.com', cast=Csv())
+
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# Seguridad en HTTPS (Producción)
+# Seguridad en HTTPS (ProducciÃ³n)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -48,13 +49,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'pagina_usuario',
+    'pagina_usuario', 
 ]
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Para archivos estáticos en Render
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Para archivos estÃ¡ticos en Render
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,7 +94,7 @@ DATABASES = {
     )
 }
 
-# --- VALIDACIÓN DE CONTRASEÑAS ---
+# --- VALIDACIÃ“N DE CONTRASEÃ‘AS ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -107,25 +108,15 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# --- ARCHIVOS ESTÁTICOS ---
+# --- ARCHIVOS ESTÃTICOS ---
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Almacenamiento optimizado para Render
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- ARCHIVOS MEDIA ---
-# En producción usar Azure Blob Storage para fotos y documentos
-# En local usar sistema de archivos
-if DEBUG:
-    # Configuración LOCAL - usar sistema de archivos
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-else:
-    # Configuración PRODUCCIÓN - usar Azure Blob Storage
-    MEDIA_URL = ''  # Azure proporciona URLs directas
-    MEDIA_ROOT = BASE_DIR / 'media'  # No se usa en producción pero necesario para compatible
-    # El almacenamiento se configura abajo en la sección AZURE
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # --- REDIRECCIONES ---
 LOGIN_URL = 'login_user'
@@ -167,13 +158,9 @@ LOGGING = {
     },
 }
 
-# --- AZURE BLOB STORAGE ---
-# Provee la connection string mediante variable de entorno 'AZURE_STORAGE_CONNECTION_STRING'
-# y el nombre del container mediante 'AZURE_CONTAINER_NAME'.
+# --- AZURE BLOB STORAGE (opcional) ---
+# Provee la connection string mediante variable de entorno `AZURE_STORAGE_CONNECTION_STRING`
+# y el nombre del container mediante `AZURE_CONTAINER_NAME`.
 from decouple import config as _config
 AZURE_STORAGE_CONNECTION_STRING = _config('AZURE_STORAGE_CONNECTION_STRING', default='')
-AZURE_CONTAINER_NAME = _config('AZURE_CONTAINER_NAME', default='media')
-
-# Usar Azure como almacenamiento en producción
-if not DEBUG and AZURE_STORAGE_CONNECTION_STRING:
-    DEFAULT_FILE_STORAGE = 'Val.azure_storage.AzureBlobStorage'
+AZURE_CONTAINER_NAME = _config('AZURE_CONTAINER_NAME', default='cursos')

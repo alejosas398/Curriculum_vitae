@@ -33,3 +33,4 @@ for user in users:
     print(f"  - Permisos específicos: {user.user_permissions.count()}")
 
     print()
+

@@ -63,3 +63,4 @@ class Command(BaseCommand):
             self.stdout.write('\n🎉 Migración completada exitosamente!')
         else:
             self.stdout.write('\n⚠️  Revisar errores en la migración')
+

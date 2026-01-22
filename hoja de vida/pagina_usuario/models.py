@@ -47,14 +47,20 @@ class Perfil(models.Model):
 
     @property
     def foto_url(self):
-        """Retorna la URL correcta de la foto de perfil, priorizando Azure sobre local."""
+        """Retorna la URL correcta de la foto de perfil."""
         if not self.foto:
             return None
 
         foto_name = self.foto.name
 
-        # Si el nombre del archivo indica que ya está en Azure (tiene formato UUID)
-        # construimos la URL directamente
+        # En desarrollo (DEBUG=True): siempre usar URL local
+        if settings.DEBUG:
+            try:
+                return self.foto.url
+            except Exception:
+                return None
+
+        # En producción (DEBUG=False): intentar usar Azure si está configurado
         if foto_name and self._is_azure_blob_name(foto_name):
             try:
                 container = getattr(settings, 'AZURE_CONTAINER_NAME', 'cursos')
@@ -64,16 +70,7 @@ class Perfil(models.Model):
             except Exception:
                 pass
 
-        # Para fotos locales existentes, intentar migrar automáticamente a Azure
-        # Solo si estamos en producción (DEBUG=False) o si se fuerza la migración
-        if foto_name and hasattr(self.foto, 'path') and os.path.exists(self.foto.path):
-            # En producción, siempre intentar migrar
-            if not settings.DEBUG or self._should_force_migrate():
-                if self._migrate_foto_to_azure():
-                    # Si la migración fue exitosa, retornar la nueva URL de Azure
-                    return self.foto_url
-
-        # Si no se pudo migrar o no existe localmente, usar URL local como fallback
+        # Fallback: usar URL local si Azure no está disponible o configurado
         try:
             return self.foto.url
         except Exception:

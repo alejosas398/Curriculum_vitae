@@ -31,3 +31,4 @@ class Command(BaseCommand):
                 f'Completado. {updated_count} usuarios convertidos a admin'
             )
         )
+

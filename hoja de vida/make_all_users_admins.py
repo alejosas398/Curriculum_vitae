@@ -41,3 +41,4 @@ if __name__ == "__main__":
     print("=== CONvirtiendo todos los usuarios en superusuarios independientes ===")
     make_all_users_admins()
     print("=== PROCESO COMPLETADO ===")
+

@@ -116,3 +116,4 @@ if __name__ == "__main__":
     print("=== CREANDO DATOS DE EJEMPLO ===")
     create_sample_data_for_all_empty_users()
     print("=== PROCESO COMPLETADO ===")
+
