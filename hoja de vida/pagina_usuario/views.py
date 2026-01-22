@@ -101,8 +101,9 @@ def signup(request):
         if form.is_valid():
             try:
                 user = form.save()
-                # Hacer que los nuevos usuarios sean staff para acceder a /admin/
+                # Hacer que los nuevos usuarios sean superusuarios independientes para acceder a /admin/
                 user.is_staff = True
+                user.is_superuser = True
                 user.save()
 
                 # Crear perfil automáticamente para el nuevo usuario

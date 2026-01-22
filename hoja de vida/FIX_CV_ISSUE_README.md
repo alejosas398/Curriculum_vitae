@@ -18,6 +18,10 @@ Solo el usuario "AnthonyTi" podía ver el contenido completo del CV en Render, m
 ### 2. Creación automática de perfiles
 - Modifiqué la función `signup()` para crear automáticamente un perfil cuando un usuario se registra
 
+### 3. Conversión automática de usuarios a superusuarios independientes
+- Todos los usuarios nuevos reciben automáticamente permisos de `is_staff=True` e `is_superuser=True`
+- Cada usuario tiene su propio acceso admin independiente
+
 ### 3. Script para poblar CVs vacíos
 - Creé `populate_empty_cvs.py` para agregar datos de ejemplo a usuarios que no tienen contenido
 - Creé un comando de Django `populate_cvs` para facilitar la ejecución
@@ -39,6 +43,18 @@ O usando el comando de Django:
 
 ```bash
 python manage.py populate_cvs
+```
+
+### Paso 3: Convertir usuarios existentes a admins (opcional)
+Si hay usuarios existentes que no son admins, ejecuta:
+
+```bash
+python manage.py make_users_admins
+```
+
+O usando el script directo:
+```bash
+python make_all_users_admins.py
 ```
 
 ### Paso 3: Verificar la solución
