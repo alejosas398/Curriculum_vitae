@@ -45,10 +45,24 @@ class PerfilAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('user',)
 
+    def get_queryset(self, request):
+        """Superusuarios pueden ver todos los perfiles, usuarios normales solo el suyo"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(user=request.user)
+
 
 @admin.register(Habilidad)
 class HabilidadAdmin(admin.ModelAdmin):
     list_display = ('nombre',)
+
+    def get_queryset(self, request):
+        """Superusuarios pueden ver todas las habilidades, usuarios normales solo las suyas"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(perfil__user=request.user)
 
 
 @admin.register(Task)
@@ -56,6 +70,13 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = ('title', 'user', 'important', 'datecompleted')
     list_filter = ('important', 'datecompleted')
     search_fields = ('title', 'description')
+
+    def get_queryset(self, request):
+        """Superusuarios pueden ver todas las tareas, usuarios normales solo las suyas"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(user=request.user)
 
 
 @admin.register(Experiencia)
@@ -81,6 +102,13 @@ class ExperienciaAdmin(admin.ModelAdmin):
         }),
     )
 
+    def get_queryset(self, request):
+        """Superusuarios pueden ver todas las experiencias, usuarios normales solo las suyas"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(perfil__user=request.user)
+
 @admin.register(Educacion)
 class EducacionAdmin(admin.ModelAdmin):
     list_display = ('titulo', 'institucion', 'estado', 'graduado')
@@ -97,6 +125,13 @@ class EducacionAdmin(admin.ModelAdmin):
             'fields': ('estado', 'graduado')
         }),
     )
+
+    def get_queryset(self, request):
+        """Superusuarios pueden ver toda la educación, usuarios normales solo la suya"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(perfil__user=request.user)
 
 @admin.register(Curso)
 class CursoAdmin(admin.ModelAdmin):
@@ -121,6 +156,13 @@ class CursoAdmin(admin.ModelAdmin):
         }),
     )
 
+    def get_queryset(self, request):
+        """Superusuarios pueden ver todos los cursos, usuarios normales solo los suyos"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(perfil__user=request.user)
+
 @admin.register(Recomendacion)
 class RecomendacionAdmin(admin.ModelAdmin):
     list_display = ('nombre_contacto', 'tipo_reconocimiento', 'relacion', 'activo')
@@ -144,6 +186,13 @@ class RecomendacionAdmin(admin.ModelAdmin):
         }),
     )
 
+    def get_queryset(self, request):
+        """Superusuarios pueden ver todas las recomendaciones, usuarios normales solo las suyas"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(perfil__user=request.user)
+
 @admin.register(Productos)
 class ProductosAdmin(admin.ModelAdmin):
     list_display = ('titulo', 'tipo', 'activo')
@@ -161,6 +210,13 @@ class ProductosAdmin(admin.ModelAdmin):
         }),
     )
 
+    def get_queryset(self, request):
+        """Superusuarios pueden ver todos los productos, usuarios normales solo los suyos"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(perfil__user=request.user)
+
 @admin.register(VentaGarage)
 class VentaGarageAdmin(admin.ModelAdmin):
     list_display = ('nombre_producto', 'estado_producto', 'valor_bien', 'activo')
@@ -177,3 +233,10 @@ class VentaGarageAdmin(admin.ModelAdmin):
             'fields': ('activo',)
         }),
     )
+
+    def get_queryset(self, request):
+        """Superusuarios pueden ver todas las ventas garage, usuarios normales solo las suyas"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(perfil__user=request.user)
