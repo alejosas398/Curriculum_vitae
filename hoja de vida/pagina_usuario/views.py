@@ -400,7 +400,7 @@ def add_experiencia(request):
         exp = form.save(commit=False)
         exp.perfil = perfil
         exp.save()
-        return redirect('ver_hoja_de_vida')
+        return redirect('ver_cv')
     return render(request, 'crear_experiencia_laboral.html', {'form': form})
 
 @login_required
@@ -411,7 +411,7 @@ def add_educacion(request):
         edu = form.save(commit=False)
         edu.perfil = perfil
         edu.save()
-        return redirect('ver_hoja_de_vida')
+        return redirect('ver_cv')
     return render(request, 'add_habilidad.html', {'form': form, 'titulo': 'Añadir Educación'})
 
 @login_required
@@ -422,7 +422,7 @@ def add_habilidad(request):
         hab = form.save(commit=False)
         hab.perfil = perfil
         hab.save()
-        return redirect('ver_hoja_de_vida')
+        return redirect('ver_cv')
     return render(request, 'add_habilidad.html', {'form': form})
 
 @login_required
@@ -433,7 +433,7 @@ def add_curso(request):
         cur = form.save(commit=False)
         cur.perfil = perfil
         cur.save()
-        return redirect('ver_hoja_de_vida')
+        return redirect('ver_cv')
     return render(request, 'add_habilidad.html', {'form': form, 'titulo': 'Añadir Curso'})
 
 @login_required
@@ -444,7 +444,7 @@ def add_productos(request):
         prod = form.save(commit=False)
         prod.perfil = perfil
         prod.save()
-        return redirect('ver_hoja_de_vida')
+        return redirect('ver_cv')
     return render(request, 'add_productos.html', {'form': form})
 
 @login_required
@@ -455,7 +455,7 @@ def add_recomendacion(request):
         reco = form.save(commit=False)
         reco.perfil = perfil
         reco.save()
-        return redirect('ver_hoja_de_vida')
+        return redirect('ver_cv')
     return render(request, 'add_recomendacion.html', {'form': form})
 
 # --- VISTAS DE EDICIÓN (UPDATE) ---
