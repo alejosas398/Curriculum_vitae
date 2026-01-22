@@ -226,6 +226,19 @@ def ver_hoja_de_vida(request, username=None):
         if created:
             logger.info(f"Created new Perfil for user: {user_obj.username}")
 
+        # Migrar automáticamente fotos locales a Azure si es necesario
+        if perfil.foto and hasattr(perfil.foto, 'path') and os.path.exists(perfil.foto.path):
+            foto_name = perfil.foto.name
+            if not perfil._is_azure_blob_name(foto_name):
+                logger.info(f"Migrating local photo for user {user_obj.username} to Azure")
+                try:
+                    if perfil._migrate_foto_to_azure():
+                        logger.info(f"Successfully migrated photo for user {user_obj.username}")
+                    else:
+                        logger.warning(f"Failed to migrate photo for user {user_obj.username}")
+                except Exception as e:
+                    logger.error(f"Error migrating photo for user {user_obj.username}: {e}")
+
         context = {
             'perfil': perfil,
             'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),

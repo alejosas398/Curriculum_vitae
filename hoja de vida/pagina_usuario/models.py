@@ -65,17 +65,24 @@ class Perfil(models.Model):
                 pass
 
         # Para fotos locales existentes, intentar migrar automáticamente a Azure
+        # Solo si estamos en producción (DEBUG=False) o si se fuerza la migración
         if foto_name and hasattr(self.foto, 'path') and os.path.exists(self.foto.path):
-            # Intentar subir automáticamente a Azure
-            if self._migrate_foto_to_azure():
-                # Si la migración fue exitosa, retornar la nueva URL de Azure
-                return self.foto_url
+            # En producción, siempre intentar migrar
+            if not settings.DEBUG or self._should_force_migrate():
+                if self._migrate_foto_to_azure():
+                    # Si la migración fue exitosa, retornar la nueva URL de Azure
+                    return self.foto_url
 
         # Si no se pudo migrar o no existe localmente, usar URL local como fallback
         try:
             return self.foto.url
         except Exception:
             return None
+
+    def _should_force_migrate(self):
+        """Determina si se debe forzar la migración (para testing)"""
+        # Forzar migración si hay fotos locales que no son de Azure
+        return not self._is_azure_blob_name(self.foto.name) if self.foto else False
 
     def _migrate_foto_to_azure(self):
         """Migra automáticamente una foto local a Azure y actualiza el registro."""
