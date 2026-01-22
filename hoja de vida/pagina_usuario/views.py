@@ -274,13 +274,33 @@ def descargar_cv_pdf(request):
     # Convertir foto a base64 si existe
     foto_base64 = None
     if perfil.foto:
-        try:
-            with open(perfil.foto.path, 'rb') as f:
-                foto_data = f.read()
+        foto_data = None
+        foto_name = perfil.foto.name
+
+        # Intentar descargar desde Azure primero
+        if foto_name:
+            foto_data = download_blob_bytes(foto_name)
+            if foto_data is None:
+                # Si no está en Azure con el nombre completo, intentar con basename
+                foto_data = download_blob_bytes(os.path.basename(foto_name))
+
+        # Si no se encontró en Azure, intentar localmente
+        if foto_data is None and hasattr(perfil.foto, 'path'):
+            try:
+                with open(perfil.foto.path, 'rb') as f:
+                    foto_data = f.read()
+            except Exception as e:
+                print(f'ERROR al leer foto local: {e}', file=sys.stderr)
+
+        # Convertir a base64 si se obtuvo la data
+        if foto_data:
+            try:
                 foto_base64 = base64.b64encode(foto_data).decode('utf-8')
-        except Exception as e:
-            print(f'ERROR al leer foto: {e}', file=sys.stderr)
-            foto_base64 = None
+            except Exception as e:
+                print(f'ERROR al convertir foto a base64: {e}', file=sys.stderr)
+                foto_base64 = None
+        else:
+            print(f'WARNING: No se pudo obtener foto de perfil: {foto_name}', file=sys.stderr)
 
     context = {
         'perfil': perfil,
@@ -386,7 +406,36 @@ def edit_perfil(request):
     perfil, created = Perfil.objects.get_or_create(user=request.user)
     form = PerfilForm(request.POST or None, request.FILES or None, instance=perfil)
     if form.is_valid():
-        form.save()
+        # Guardar el perfil primero para obtener el archivo
+        perfil_saved = form.save()
+
+        # Si se subió una foto nueva, subirla a Azure
+        if 'foto' in request.FILES:
+            foto_file = request.FILES['foto']
+            if foto_file:
+                try:
+                    # Leer el contenido del archivo
+                    foto_data = foto_file.read()
+                    foto_file.seek(0)  # Reset file pointer
+
+                    # Crear nombre único para el blob
+                    import uuid
+                    file_extension = os.path.splitext(foto_file.name)[1]
+                    blob_name = f"perfil_fotos/{uuid.uuid4()}{file_extension}"
+
+                    # Subir a Azure
+                    from .azure_blob import upload_blob_bytes
+                    content_type = f"image/{file_extension[1:]}" if file_extension else "image/jpeg"
+                    if upload_blob_bytes(blob_name, foto_data, content_type):
+                        # Actualizar el campo foto con la ruta de Azure
+                        perfil_saved.foto.name = blob_name
+                        perfil_saved.save()
+                        logger.info(f"Foto de perfil subida a Azure: {blob_name}")
+                    else:
+                        logger.warning("No se pudo subir la foto a Azure, manteniendo archivo local")
+                except Exception as e:
+                    logger.error(f"Error subiendo foto a Azure: {e}")
+
         return redirect('ver_cv')
     return render(request, 'edit_perfil.html', {'form': form})
 

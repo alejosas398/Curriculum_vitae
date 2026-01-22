@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
+import os
 
 class Task(models.Model):
     title = models.CharField(max_length=100)
@@ -42,6 +44,49 @@ class Perfil(models.Model):
     
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
+
+    @property
+    def foto_url(self):
+        """Retorna la URL correcta de la foto de perfil, priorizando Azure sobre local."""
+        if not self.foto:
+            return None
+
+        foto_name = self.foto.name
+
+        # Si el nombre del archivo indica que podría estar en Azure (tiene formato UUID)
+        # asumimos que está en Azure y construimos la URL directamente
+        if foto_name and self._is_azure_blob_name(foto_name):
+            try:
+                container = getattr(settings, 'AZURE_CONTAINER_NAME', 'cursos')
+                account_name = self._extract_account_name()
+                if account_name:
+                    return f"https://{account_name}.blob.core.windows.net/{container}/{foto_name}"
+            except Exception:
+                pass
+
+        # Si no parece ser un blob de Azure, usar URL local si existe
+        try:
+            return self.foto.url
+        except Exception:
+            return None
+
+    def _is_azure_blob_name(self, name):
+        """Determina si un nombre de archivo parece ser de Azure Blob Storage."""
+        # Los archivos subidos a Azure tendrán nombres con UUID generados
+        import re
+        # Buscar patrón de UUID en el nombre del archivo
+        return bool(re.search(r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}', name))
+
+    def _extract_account_name(self):
+        """Extrae el nombre de la cuenta de Azure desde la connection string."""
+        conn_str = getattr(settings, 'AZURE_STORAGE_CONNECTION_STRING', '')
+        if 'AccountName=' in conn_str:
+            start = conn_str.find('AccountName=') + len('AccountName=')
+            end = conn_str.find(';', start)
+            if end == -1:
+                end = len(conn_str)
+            return conn_str[start:end]
+        return None
 
 class Experiencia(models.Model):
     perfil = models.ForeignKey(Perfil, on_delete=models.CASCADE, related_name='experiencias')
