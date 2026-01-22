@@ -210,33 +210,34 @@ def panel_admin_perfil(request):
     return render(request, 'panel_admin_perfil.html', context)
 
 def ver_hoja_de_vida(request, username=None):
-    # PRIVACIDAD: Solo permite ver el CV propio, ignora el parámetro username
-    if not request.user.is_authenticated:
+    """PRIVACIDAD: Solo permite ver el CV propio, ignora el parámetro username"""
+    try:
         # Usuario anónimo - redirige al login
-        logger.debug("Anonymous user, redirecting to login")
-        return redirect('login_user')
+        if not request.user.is_authenticated:
+            logger.debug("Anonymous user, redirecting to login")
+            return redirect('login_user')
 
-    # Siempre usa el perfil del usuario logueado (propietario)
-    user_obj = request.user
-    logger.debug(f"Showing CV for user: {user_obj.username}")
+        # Siempre usa el perfil del usuario logueado (propietario)
+        user_obj = request.user
+        logger.debug(f"Showing CV for user: {user_obj.username}")
 
-    perfil, created = Perfil.objects.get_or_create(user=user_obj)
+        perfil, created = Perfil.objects.get_or_create(user=user_obj)
 
-    if created:
-        logger.info(f"Created new Perfil for user: {user_obj.username}")
+        if created:
+            logger.info(f"Created new Perfil for user: {user_obj.username}")
 
-    context = {
-        'perfil': perfil,
-        'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
-        'educaciones': perfil.educaciones.all(),
-        'habilidades': perfil.habilidades.all(),
-        'cursos': perfil.cursos.all(),
-        'proyectos_productos': perfil.productos.all(),
-        'recomendaciones': perfil.recomendaciones.all(),
-        'ventas_garage': perfil.ventas_garage.all(),
-        'es_propietario': True  # Siempre es propietario de su propio CV
-    }
-        
+        context = {
+            'perfil': perfil,
+            'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
+            'educaciones': perfil.educaciones.all(),
+            'habilidades': perfil.habilidades.all(),
+            'cursos': perfil.cursos.all(),
+            'proyectos_productos': perfil.productos.all(),
+            'recomendaciones': perfil.recomendaciones.all(),
+            'ventas_garage': perfil.ventas_garage.all(),
+            'es_propietario': True  # Siempre es propietario de su propio CV
+        }
+
         logger.debug(f"Rendering CV for user: {user_obj.username}")
         # Usa la template original - si falla pasará a la excepción
         return render(request, 'u_hoja_de_vida.html', context)
@@ -244,21 +245,14 @@ def ver_hoja_de_vida(request, username=None):
         logger.error(f"Error in ver_hoja_de_vida: {str(e)}", exc_info=True)
         # Si hay error, retorna una versión simple
         try:
-            if username:
-                user_obj = get_object_or_404(User, username=username)
-            elif request.user.is_authenticated:
-                user_obj = request.user
-            else:
-                return redirect('login_user')
-            
-            perfil, created = Perfil.objects.get_or_create(user=user_obj)
-            
+            perfil, created = Perfil.objects.get_or_create(user=request.user)
+
             context = {
                 'perfil': perfil,
                 'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
                 'educaciones': perfil.educaciones.all(),
                 'habilidades': perfil.habilidades.all(),
-                'es_propietario': request.user == user_obj
+                'es_propietario': True
             }
             logger.info("Falling back to simple template")
             return render(request, 'u_hoja_de_vida_simple.html', context)
