@@ -90,6 +90,53 @@ def debug_list_blobs(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+@login_required
+def migrate_photos_to_azure(request):
+    """ADMIN: Migrar todas las fotos locales a Azure Blob Storage"""
+    if not request.user.is_superuser:
+        return JsonResponse({"error": "Only superusers can access this"}, status=403)
+
+    from .models import Perfil
+
+    migrated = 0
+    errors = 0
+    skipped = 0
+
+    perfiles = Perfil.objects.exclude(foto='').exclude(foto=None)
+
+    for perfil in perfiles:
+        try:
+            foto_name = perfil.foto.name
+
+            # Si ya está en Azure, saltar
+            if perfil._is_azure_blob_name(foto_name):
+                skipped += 1
+                continue
+
+            # Si no existe localmente, saltar
+            if not hasattr(perfil.foto, 'path') or not os.path.exists(perfil.foto.path):
+                skipped += 1
+                continue
+
+            # Intentar migrar
+            if perfil._migrate_foto_to_azure():
+                migrated += 1
+                logger.info(f"Migrated photo for user {perfil.user.username}")
+            else:
+                errors += 1
+                logger.error(f"Failed to migrate photo for user {perfil.user.username}")
+
+        except Exception as e:
+            errors += 1
+            logger.error(f"Error migrating photo for user {perfil.user.username}: {e}")
+
+    return JsonResponse({
+        "message": f"Migration completed: {migrated} migrated, {skipped} skipped, {errors} errors",
+        "migrated": migrated,
+        "skipped": skipped,
+        "errors": errors
+    })
+
 def home(request):
     return render(request, "home.html")
 
