@@ -104,6 +104,13 @@ def signup(request):
                 # Hacer que los nuevos usuarios sean staff para acceder a /admin/
                 user.is_staff = True
                 user.save()
+
+                # Crear perfil automáticamente para el nuevo usuario
+                from .models import Perfil
+                perfil, created = Perfil.objects.get_or_create(user=user)
+                if created:
+                    logger.info(f"Created new Perfil for user: {user.username}")
+
                 login(request, user)
                 return redirect('tasks')
             except IntegrityError:
@@ -571,7 +578,7 @@ def descargar_certificado(request, cert_type, cert_id):
     try:
         # Obtener el objeto según el tipo
         if cert_type == 'experiencia':
-            cert_obj = get_object_or_404(ExperienciaLaboral, pk=cert_id, perfil__user=request.user)
+            cert_obj = get_object_or_404(Experiencia, pk=cert_id, perfil__user=request.user)
         elif cert_type == 'curso':
             cert_obj = get_object_or_404(Curso, pk=cert_id, perfil__user=request.user)
         elif cert_type == 'recomendacion':
