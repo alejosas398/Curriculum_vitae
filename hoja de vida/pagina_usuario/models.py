@@ -53,8 +53,8 @@ class Perfil(models.Model):
 
         foto_name = self.foto.name
 
-        # Si el nombre del archivo indica que podría estar en Azure (tiene formato UUID)
-        # asumimos que está en Azure y construimos la URL directamente
+        # Si el nombre del archivo indica que ya está en Azure (tiene formato UUID)
+        # construimos la URL directamente
         if foto_name and self._is_azure_blob_name(foto_name):
             try:
                 container = getattr(settings, 'AZURE_CONTAINER_NAME', 'cursos')
@@ -64,11 +64,49 @@ class Perfil(models.Model):
             except Exception:
                 pass
 
-        # Si no parece ser un blob de Azure, usar URL local si existe
+        # Para fotos locales existentes, intentar migrar automáticamente a Azure
+        if foto_name and hasattr(self.foto, 'path') and os.path.exists(self.foto.path):
+            # Intentar subir automáticamente a Azure
+            if self._migrate_foto_to_azure():
+                # Si la migración fue exitosa, retornar la nueva URL de Azure
+                return self.foto_url
+
+        # Si no se pudo migrar o no existe localmente, usar URL local como fallback
         try:
             return self.foto.url
         except Exception:
             return None
+
+    def _migrate_foto_to_azure(self):
+        """Migra automáticamente una foto local a Azure y actualiza el registro."""
+        if not self.foto or not hasattr(self.foto, 'path'):
+            return False
+
+        foto_path = self.foto.path
+        if not os.path.exists(foto_path):
+            return False
+
+        try:
+            # Importar aquí para evitar dependencias circulares
+            from .azure_blob import upload_file_to_blob
+            import uuid
+
+            # Generar nuevo nombre único para Azure
+            file_extension = os.path.splitext(foto_path)[1]
+            blob_name = f"perfil_fotos/{uuid.uuid4()}{file_extension}"
+
+            # Subir a Azure
+            if upload_file_to_blob(foto_path, blob_name):
+                # Actualizar el registro con la nueva ruta
+                self.foto.name = blob_name
+                self.save(update_fields=['foto'])
+                return True
+
+        except Exception as e:
+            print(f"Error migrando foto a Azure: {e}")
+            return False
+
+        return False
 
     def _is_azure_blob_name(self, name):
         """Determina si un nombre de archivo parece ser de Azure Blob Storage."""
