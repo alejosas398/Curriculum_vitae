@@ -6,13 +6,14 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, FileResponse, StreamingHttpResponse
 from django.template.loader import get_template
 from django.conf import settings
 from weasyprint import HTML, CSS
 from io import BytesIO
 import os
 import logging
+import requests
 
 from pypdf import PdfReader, PdfWriter
 
@@ -30,6 +31,48 @@ from .forms import (
 )
 
 logger = logging.getLogger(__name__)
+
+# --- VISTA DE PROXY PARA ARCHIVOS DE AZURE ---
+
+def serve_azure_media(request, file_path):
+    """Proxy para servir archivos desde Azure Blob Storage"""
+    try:
+        # Si NO estamos usando Azure, intentar servir desde filesystem local
+        if not hasattr(settings, 'DEFAULT_FILE_STORAGE') or 'azure' not in settings.DEFAULT_FILE_STORAGE.lower():
+            local_path = os.path.join(settings.MEDIA_ROOT, file_path)
+            if os.path.exists(local_path):
+                return FileResponse(open(local_path, 'rb'), content_type='image/jpeg')
+            return HttpResponse('Not found', status=404)
+        
+        # Estamos usando Azure
+        from Val.azure_storage import AzureBlobStorage
+        storage = AzureBlobStorage()
+        
+        # Construir el nombre del blob
+        blob_name = file_path
+        
+        # Descargar desde Azure
+        blob_content = storage._open(blob_name, 'rb')
+        
+        # Determinar content type
+        content_type = 'image/jpeg'
+        if file_path.lower().endswith('.png'):
+            content_type = 'image/png'
+        elif file_path.lower().endswith('.gif'):
+            content_type = 'image/gif'
+        elif file_path.lower().endswith('.webp'):
+            content_type = 'image/webp'
+        elif file_path.lower().endswith('.pdf'):
+            content_type = 'application/pdf'
+        
+        # Servir el archivo
+        response = FileResponse(blob_content, content_type=content_type)
+        response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
+        return response
+    
+    except Exception as e:
+        logger.error(f'Error serving media from Azure: {str(e)}')
+        return HttpResponse(f'Error: {str(e)}', status=500)
 
 # --- VISTAS DE AUTENTICACIÓN ---
 

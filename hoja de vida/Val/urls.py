@@ -25,6 +25,9 @@ urlpatterns = [
     path('health/', views.health_check, name='health_check'),
     path('debug/blobs/', views.debug_list_blobs, name='debug_list_blobs'),
     
+    # --- MEDIA PROXY (Para servir archivos desde Azure) ---
+    path('media/<path:file_path>', views.serve_azure_media, name='serve_azure_media'),
+    
     # --- RUTAS GENERALES ---
     path('', views.home, name='home'),
     path('signup/', views.signup, name='signup'),

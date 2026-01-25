@@ -9,7 +9,8 @@ from django.core.files.base import File
 from io import BytesIO
 import os
 import uuid
-from azure.storage.blob import BlobServiceClient
+from datetime import datetime, timedelta
+from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 
 
@@ -160,10 +161,37 @@ class AzureBlobStorage(Storage):
             return 0
 
     def url(self, name):
-        """Get the URL of a file"""
+        """Get the URL of a file with SAS token for access"""
         if not self.account_name:
             return f'/media/{name}'
         
+        try:
+            # Try to generate SAS URL (if account key is available)
+            if 'AccountKey=' in self.connection_string:
+                # Extract account key
+                start = self.connection_string.find('AccountKey=') + len('AccountKey=')
+                end = self.connection_string.find(';', start)
+                if end == -1:
+                    end = len(self.connection_string)
+                account_key = self.connection_string[start:end]
+                
+                # Generate SAS token (valid for 30 days - long enough for most images)
+                sas_token = generate_blob_sas(
+                    account_name=self.account_name,
+                    container_name=self.container_name,
+                    blob_name=name,
+                    account_key=account_key,
+                    permission=BlobSasPermissions(read=True),
+                    expiry=datetime.utcnow() + timedelta(days=30)
+                )
+                
+                base_url = f'https://{self.account_name}.blob.core.windows.net/{self.container_name}/{name}'
+                return f'{base_url}?{sas_token}'
+        except Exception as e:
+            import logging
+            logging.warning(f'Could not generate SAS token: {str(e)}')
+        
+        # Fallback URL (requires public access, which may not work)
         return f'https://{self.account_name}.blob.core.windows.net/{self.container_name}/{name}'
 
     def get_accessed_time(self, name):
