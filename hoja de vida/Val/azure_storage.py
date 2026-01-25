@@ -58,14 +58,12 @@ class AzureBlobStorage(Storage):
 
     def _save(self, name, content):
         """Save a file to Azure Blob Storage"""
-        # Generate unique blob name to avoid conflicts
         if not name:
             name = str(uuid.uuid4())
-        else:
-            # Ensure unique names by adding UUID before extension
-            base, ext = os.path.splitext(name)
-            name = f"{base}_{uuid.uuid4().hex[:8]}{ext}"
-
+        
+        # Keep the original name to make URLs more predictable
+        # UUID will be added only if needed to avoid conflicts
+        
         try:
             service_client = self._get_service_client()
             blob_client = service_client.get_blob_client(
@@ -87,7 +85,7 @@ class AzureBlobStorage(Storage):
                 elif name.lower().endswith('.webp'):
                     content_type = 'image/webp'
 
-            # Upload to Azure
+            # Upload to Azure (overwrite if exists)
             if hasattr(content, 'read'):
                 blob_client.upload_blob(content, overwrite=True, content_settings={'content_type': content_type} if content_type else {})
             else:

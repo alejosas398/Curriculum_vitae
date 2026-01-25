@@ -37,22 +37,39 @@ logger = logging.getLogger(__name__)
 def serve_azure_media(request, file_path):
     """Proxy para servir archivos desde Azure Blob Storage"""
     try:
-        # Si NO estamos usando Azure, intentar servir desde filesystem local
-        if not hasattr(settings, 'DEFAULT_FILE_STORAGE') or 'azure' not in settings.DEFAULT_FILE_STORAGE.lower():
-            local_path = os.path.join(settings.MEDIA_ROOT, file_path)
-            if os.path.exists(local_path):
-                return FileResponse(open(local_path, 'rb'), content_type='image/jpeg')
-            return HttpResponse('Not found', status=404)
-        
         # Estamos usando Azure
         from Val.azure_storage import AzureBlobStorage
         storage = AzureBlobStorage()
         
-        # Construir el nombre del blob
-        blob_name = file_path
-        
-        # Descargar desde Azure
-        blob_content = storage._open(blob_name, 'rb')
+        # Intentar leer el archivo directamente desde Azure
+        try:
+            blob_content = storage._open(file_path, 'rb')
+        except FileNotFoundError:
+            # Si no está guardado con ese nombre exacto, podría estar con UUID
+            # Intentar buscar en Azure
+            logger.warning(f'File {file_path} not found in Azure, searching...')
+            try:
+                service_client = storage._get_service_client()
+                container_client = service_client.get_container_client(storage.container_name)
+                
+                # Buscar un blob que coincida
+                found = False
+                blobs = container_client.list_blobs(name_starts_with=os.path.dirname(file_path))
+                base_filename = os.path.basename(file_path)
+                
+                for blob in blobs:
+                    if base_filename in blob.name or blob.name.startswith(os.path.dirname(file_path)):
+                        # Encontrado, usar este
+                        blob_content = storage._open(blob.name, 'rb')
+                        found = True
+                        logger.info(f'Found file as: {blob.name}')
+                        break
+                
+                if not found:
+                    return HttpResponse('File not found in Azure', status=404)
+            except Exception as e:
+                logger.error(f'Could not find file: {str(e)}')
+                return HttpResponse(f'File not found: {str(e)}', status=404)
         
         # Determinar content type
         content_type = 'image/jpeg'
@@ -71,7 +88,7 @@ def serve_azure_media(request, file_path):
         return response
     
     except Exception as e:
-        logger.error(f'Error serving media from Azure: {str(e)}')
+        logger.error(f'Error serving media from Azure: {str(e)}, file_path: {file_path}')
         return HttpResponse(f'Error: {str(e)}', status=500)
 
 # --- VISTAS DE AUTENTICACIÓN ---
