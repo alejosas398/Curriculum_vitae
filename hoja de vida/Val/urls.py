@@ -24,7 +24,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('health/', views.health_check, name='health_check'),
     path('debug/blobs/', views.debug_list_blobs, name='debug_list_blobs'),
-    path('debug/migrate-photos/', views.migrate_photos_to_azure, name='migrate_photos_to_azure'),
     
     # --- RUTAS GENERALES ---
     path('', views.home, name='home'),
@@ -74,5 +73,6 @@ urlpatterns = [
     path('perfil/experiencia/eliminar/<int:pk>/', views.eliminar_experiencia, name='delete_experiencia'),
 ]
 
+# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

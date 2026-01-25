@@ -1,7 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.conf import settings
-import os
 
 class Task(models.Model):
     title = models.CharField(max_length=100)
@@ -44,91 +42,6 @@ class Perfil(models.Model):
     
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
-
-    @property
-    def foto_url(self):
-        """Retorna la URL correcta de la foto de perfil."""
-        if not self.foto:
-            return None
-
-        foto_name = self.foto.name
-
-        # En desarrollo (DEBUG=True): siempre usar URL local
-        if settings.DEBUG:
-            try:
-                return self.foto.url
-            except Exception:
-                return None
-
-        # En producción (DEBUG=False): intentar usar Azure si está configurado
-        if foto_name and self._is_azure_blob_name(foto_name):
-            try:
-                container = getattr(settings, 'AZURE_CONTAINER_NAME', 'cursos')
-                account_name = self._extract_account_name()
-                if account_name:
-                    return f"https://{account_name}.blob.core.windows.net/{container}/{foto_name}"
-            except Exception:
-                pass
-
-        # Fallback: usar URL local si Azure no está disponible o configurado
-        try:
-            return self.foto.url
-        except Exception:
-            return None
-
-    def _should_force_migrate(self):
-        """Determina si se debe forzar la migración (para testing)"""
-        # Forzar migración si hay fotos locales que no son de Azure
-        return not self._is_azure_blob_name(self.foto.name) if self.foto else False
-
-    def _migrate_foto_to_azure(self):
-        """Migra automáticamente una foto local a Azure y actualiza el registro."""
-        if not self.foto or not hasattr(self.foto, 'path'):
-            return False
-
-        foto_path = self.foto.path
-        if not os.path.exists(foto_path):
-            return False
-
-        try:
-            # Importar aquí para evitar dependencias circulares
-            from .azure_blob import upload_file_to_blob
-            import uuid
-
-            # Generar nuevo nombre único para Azure
-            file_extension = os.path.splitext(foto_path)[1]
-            blob_name = f"perfil_fotos/{uuid.uuid4()}{file_extension}"
-
-            # Subir a Azure
-            if upload_file_to_blob(foto_path, blob_name):
-                # Actualizar el registro con la nueva ruta
-                self.foto.name = blob_name
-                self.save(update_fields=['foto'])
-                return True
-
-        except Exception as e:
-            print(f"Error migrando foto a Azure: {e}")
-            return False
-
-        return False
-
-    def _is_azure_blob_name(self, name):
-        """Determina si un nombre de archivo parece ser de Azure Blob Storage."""
-        # Los archivos subidos a Azure tendrán nombres con UUID generados
-        import re
-        # Buscar patrón de UUID en el nombre del archivo
-        return bool(re.search(r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}', name))
-
-    def _extract_account_name(self):
-        """Extrae el nombre de la cuenta de Azure desde la connection string."""
-        conn_str = getattr(settings, 'AZURE_STORAGE_CONNECTION_STRING', '')
-        if 'AccountName=' in conn_str:
-            start = conn_str.find('AccountName=') + len('AccountName=')
-            end = conn_str.find(';', start)
-            if end == -1:
-                end = len(conn_str)
-            return conn_str[start:end]
-        return None
 
 class Experiencia(models.Model):
     perfil = models.ForeignKey(Perfil, on_delete=models.CASCADE, related_name='experiencias')

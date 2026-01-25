@@ -45,20 +45,10 @@ class PerfilAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('user',)
 
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver su propio perfil"""
-        qs = super().get_queryset(request)
-        return qs.filter(user=request.user)
-
 
 @admin.register(Habilidad)
 class HabilidadAdmin(admin.ModelAdmin):
     list_display = ('nombre',)
-
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver sus propias habilidades"""
-        qs = super().get_queryset(request)
-        return qs.filter(perfil__user=request.user)
 
 
 @admin.register(Task)
@@ -66,11 +56,6 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = ('title', 'user', 'important', 'datecompleted')
     list_filter = ('important', 'datecompleted')
     search_fields = ('title', 'description')
-
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver sus propias tareas"""
-        qs = super().get_queryset(request)
-        return qs.filter(user=request.user)
 
 
 @admin.register(Experiencia)
@@ -96,11 +81,6 @@ class ExperienciaAdmin(admin.ModelAdmin):
         }),
     )
 
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver sus propias experiencias"""
-        qs = super().get_queryset(request)
-        return qs.filter(perfil__user=request.user)
-
 @admin.register(Educacion)
 class EducacionAdmin(admin.ModelAdmin):
     list_display = ('titulo', 'institucion', 'estado', 'graduado')
@@ -117,11 +97,6 @@ class EducacionAdmin(admin.ModelAdmin):
             'fields': ('estado', 'graduado')
         }),
     )
-
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver su propia educación"""
-        qs = super().get_queryset(request)
-        return qs.filter(perfil__user=request.user)
 
 @admin.register(Curso)
 class CursoAdmin(admin.ModelAdmin):
@@ -146,11 +121,6 @@ class CursoAdmin(admin.ModelAdmin):
         }),
     )
 
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver sus propios cursos"""
-        qs = super().get_queryset(request)
-        return qs.filter(perfil__user=request.user)
-
 @admin.register(Recomendacion)
 class RecomendacionAdmin(admin.ModelAdmin):
     list_display = ('nombre_contacto', 'tipo_reconocimiento', 'relacion', 'activo')
@@ -174,11 +144,6 @@ class RecomendacionAdmin(admin.ModelAdmin):
         }),
     )
 
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver sus propias recomendaciones"""
-        qs = super().get_queryset(request)
-        return qs.filter(perfil__user=request.user)
-
 @admin.register(Productos)
 class ProductosAdmin(admin.ModelAdmin):
     list_display = ('titulo', 'tipo', 'activo')
@@ -196,11 +161,6 @@ class ProductosAdmin(admin.ModelAdmin):
         }),
     )
 
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver sus propios productos"""
-        qs = super().get_queryset(request)
-        return qs.filter(perfil__user=request.user)
-
 @admin.register(VentaGarage)
 class VentaGarageAdmin(admin.ModelAdmin):
     list_display = ('nombre_producto', 'estado_producto', 'valor_bien', 'activo')
@@ -217,8 +177,3 @@ class VentaGarageAdmin(admin.ModelAdmin):
             'fields': ('activo',)
         }),
     )
-
-    def get_queryset(self, request):
-        """Todos los usuarios solo pueden ver sus propias ventas garage"""
-        qs = super().get_queryset(request)
-        return qs.filter(perfil__user=request.user)

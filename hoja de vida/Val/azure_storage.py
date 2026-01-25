@@ -21,13 +21,15 @@ class AzureBlobStorage(Storage):
         self.container_name = getattr(settings, 'AZURE_CONTAINER_NAME', 'media')
         self.account_name = self._extract_account_name()
 
+        # Only raise error if we're trying to use Azure storage
         if not self.connection_string:
-            raise ValueError(
-                'AZURE_STORAGE_CONNECTION_STRING must be configured in settings'
-            )
+            import logging
+            logging.warning('AZURE_STORAGE_CONNECTION_STRING not configured, Azure storage operations may fail')
 
     def _get_service_client(self):
         """Get Azure Blob Service Client"""
+        if not self.connection_string:
+            raise ValueError('AZURE_STORAGE_CONNECTION_STRING must be configured in settings')
         return BlobServiceClient.from_connection_string(self.connection_string)
 
     def _extract_account_name(self):

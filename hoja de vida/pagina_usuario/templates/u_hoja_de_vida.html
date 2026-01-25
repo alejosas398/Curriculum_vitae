@@ -97,11 +97,8 @@
         <div class="row g-0">
             <div class="col-lg-4 sidebar">
                 <div class="text-center">
-                    {% if perfil.foto_url %}
-                        <img src="{{ perfil.foto_url }}" class="profile-img" alt="Foto" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        <div class="profile-img d-flex align-items-center justify-content-center bg-white mx-auto border" style="display: none;">
-                            <i class="bi bi-person-fill text-light" style="font-size: 5rem;"></i>
-                        </div>
+                    {% if perfil.foto %}
+                        <img src="{{ perfil.foto.url }}" class="profile-img" alt="Foto">
                     {% else %}
                         <div class="profile-img d-flex align-items-center justify-content-center bg-white mx-auto border">
                             <i class="bi bi-person-fill text-light" style="font-size: 5rem;"></i>

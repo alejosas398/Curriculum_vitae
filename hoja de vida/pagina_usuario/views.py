@@ -90,53 +90,6 @@ def debug_list_blobs(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-@login_required
-def migrate_photos_to_azure(request):
-    """ADMIN: Migrar todas las fotos locales a Azure Blob Storage"""
-    if not request.user.is_superuser:
-        return JsonResponse({"error": "Only superusers can access this"}, status=403)
-
-    from .models import Perfil
-
-    migrated = 0
-    errors = 0
-    skipped = 0
-
-    perfiles = Perfil.objects.exclude(foto='').exclude(foto=None)
-
-    for perfil in perfiles:
-        try:
-            foto_name = perfil.foto.name
-
-            # Si ya está en Azure, saltar
-            if perfil._is_azure_blob_name(foto_name):
-                skipped += 1
-                continue
-
-            # Si no existe localmente, saltar
-            if not hasattr(perfil.foto, 'path') or not os.path.exists(perfil.foto.path):
-                skipped += 1
-                continue
-
-            # Intentar migrar
-            if perfil._migrate_foto_to_azure():
-                migrated += 1
-                logger.info(f"Migrated photo for user {perfil.user.username}")
-            else:
-                errors += 1
-                logger.error(f"Failed to migrate photo for user {perfil.user.username}")
-
-        except Exception as e:
-            errors += 1
-            logger.error(f"Error migrating photo for user {perfil.user.username}: {e}")
-
-    return JsonResponse({
-        "message": f"Migration completed: {migrated} migrated, {skipped} skipped, {errors} errors",
-        "migrated": migrated,
-        "skipped": skipped,
-        "errors": errors
-    })
-
 def home(request):
     return render(request, "home.html")
 
@@ -148,17 +101,9 @@ def signup(request):
         if form.is_valid():
             try:
                 user = form.save()
-                # Hacer que los nuevos usuarios sean superusuarios independientes para acceder a /admin/
+                # Hacer que los nuevos usuarios sean staff para acceder a /admin/
                 user.is_staff = True
-                user.is_superuser = True
                 user.save()
-
-                # Crear perfil automáticamente para el nuevo usuario
-                from .models import Perfil
-                perfil, created = Perfil.objects.get_or_create(user=user)
-                if created:
-                    logger.info(f"Created new Perfil for user: {user.username}")
-
                 login(request, user)
                 return redirect('tasks')
             except IntegrityError:
@@ -257,23 +202,26 @@ def panel_admin_perfil(request):
     return render(request, 'panel_admin_perfil.html', context)
 
 def ver_hoja_de_vida(request, username=None):
-    """PRIVACIDAD: Solo permite ver el CV propio, ignora el parámetro username"""
+    # Si username está especificado, usa ese, si no y usuario está autenticado, usa su perfil
+    # Si es anónimo, redirige al login
     try:
-        # Usuario anónimo - redirige al login
-        if not request.user.is_authenticated:
+        logger.debug(f"ver_hoja_de_vida called: username={username}, is_authenticated={request.user.is_authenticated}")
+        
+        if username:
+            user_obj = get_object_or_404(User, username=username)
+        elif request.user.is_authenticated:
+            user_obj = request.user
+        else:
+            # Usuario anónimo - redirige al login
             logger.debug("Anonymous user, redirecting to login")
             return redirect('login_user')
-
-        # Siempre usa el perfil del usuario logueado (propietario)
-        user_obj = request.user
-        logger.debug(f"Showing CV for user: {user_obj.username}")
-
+        
+        logger.debug(f"Getting or creating Perfil for user: {user_obj.username}")
         perfil, created = Perfil.objects.get_or_create(user=user_obj)
-
+        
         if created:
             logger.info(f"Created new Perfil for user: {user_obj.username}")
-
-
+        
         context = {
             'perfil': perfil,
             'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
@@ -283,9 +231,9 @@ def ver_hoja_de_vida(request, username=None):
             'proyectos_productos': perfil.productos.all(),
             'recomendaciones': perfil.recomendaciones.all(),
             'ventas_garage': perfil.ventas_garage.all(),
-            'es_propietario': True  # Siempre es propietario de su propio CV
+            'es_propietario': request.user == user_obj
         }
-
+        
         logger.debug(f"Rendering CV for user: {user_obj.username}")
         # Usa la template original - si falla pasará a la excepción
         return render(request, 'u_hoja_de_vida.html', context)
@@ -293,14 +241,21 @@ def ver_hoja_de_vida(request, username=None):
         logger.error(f"Error in ver_hoja_de_vida: {str(e)}", exc_info=True)
         # Si hay error, retorna una versión simple
         try:
-            perfil, created = Perfil.objects.get_or_create(user=request.user)
-
+            if username:
+                user_obj = get_object_or_404(User, username=username)
+            elif request.user.is_authenticated:
+                user_obj = request.user
+            else:
+                return redirect('login_user')
+            
+            perfil, created = Perfil.objects.get_or_create(user=user_obj)
+            
             context = {
                 'perfil': perfil,
                 'experiencias': perfil.experiencias.all().order_by('-fecha_inicio'),
                 'educaciones': perfil.educaciones.all(),
                 'habilidades': perfil.habilidades.all(),
-                'es_propietario': True
+                'es_propietario': request.user == user_obj
             }
             logger.info("Falling back to simple template")
             return render(request, 'u_hoja_de_vida_simple.html', context)
@@ -317,38 +272,31 @@ def descargar_cv_pdf(request):
     """
     import sys
     import base64
+    import requests
+    from django.conf import settings
+    
     perfil = get_object_or_404(Perfil, user=request.user)
 
     # Convertir foto a base64 si existe
     foto_base64 = None
     if perfil.foto:
-        foto_data = None
-        foto_name = perfil.foto.name
-
-        # Intentar descargar desde Azure primero
-        if foto_name:
-            foto_data = download_blob_bytes(foto_name)
-            if foto_data is None:
-                # Si no está en Azure con el nombre completo, intentar con basename
-                foto_data = download_blob_bytes(os.path.basename(foto_name))
-
-        # Si no se encontró en Azure, intentar localmente
-        if foto_data is None and hasattr(perfil.foto, 'path'):
-            try:
+        try:
+            # Check if using Azure storage
+            if hasattr(settings, 'DEFAULT_FILE_STORAGE') and 'azure' in settings.DEFAULT_FILE_STORAGE.lower():
+                # Read from Azure Blob Storage
+                foto_url = perfil.foto.url
+                response = requests.get(foto_url, timeout=10)
+                if response.status_code == 200:
+                    foto_data = response.content
+                    foto_base64 = base64.b64encode(foto_data).decode('utf-8')
+            else:
+                # Read from local filesystem
                 with open(perfil.foto.path, 'rb') as f:
                     foto_data = f.read()
-            except Exception as e:
-                print(f'ERROR al leer foto local: {e}', file=sys.stderr)
-
-        # Convertir a base64 si se obtuvo la data
-        if foto_data:
-            try:
-                foto_base64 = base64.b64encode(foto_data).decode('utf-8')
-            except Exception as e:
-                print(f'ERROR al convertir foto a base64: {e}', file=sys.stderr)
-                foto_base64 = None
-        else:
-            print(f'WARNING: No se pudo obtener foto de perfil: {foto_name}', file=sys.stderr)
+                    foto_base64 = base64.b64encode(foto_data).decode('utf-8')
+        except Exception as e:
+            print(f'ERROR al leer foto: {e}', file=sys.stderr)
+            foto_base64 = None
 
     context = {
         'perfil': perfil,
@@ -454,36 +402,7 @@ def edit_perfil(request):
     perfil, created = Perfil.objects.get_or_create(user=request.user)
     form = PerfilForm(request.POST or None, request.FILES or None, instance=perfil)
     if form.is_valid():
-        # Guardar el perfil primero para obtener el archivo
-        perfil_saved = form.save()
-
-        # Si se subió una foto nueva, subirla a Azure
-        if 'foto' in request.FILES:
-            foto_file = request.FILES['foto']
-            if foto_file:
-                try:
-                    # Leer el contenido del archivo
-                    foto_data = foto_file.read()
-                    foto_file.seek(0)  # Reset file pointer
-
-                    # Crear nombre único para el blob
-                    import uuid
-                    file_extension = os.path.splitext(foto_file.name)[1]
-                    blob_name = f"perfil_fotos/{uuid.uuid4()}{file_extension}"
-
-                    # Subir a Azure
-                    from .azure_blob import upload_blob_bytes
-                    content_type = f"image/{file_extension[1:]}" if file_extension else "image/jpeg"
-                    if upload_blob_bytes(blob_name, foto_data, content_type):
-                        # Actualizar el campo foto con la ruta de Azure
-                        perfil_saved.foto.name = blob_name
-                        perfil_saved.save()
-                        logger.info(f"Foto de perfil subida a Azure: {blob_name}")
-                    else:
-                        logger.warning("No se pudo subir la foto a Azure, manteniendo archivo local")
-                except Exception as e:
-                    logger.error(f"Error subiendo foto a Azure: {e}")
-
+        form.save()
         return redirect('ver_cv')
     return render(request, 'edit_perfil.html', {'form': form})
 
@@ -497,7 +416,7 @@ def add_experiencia(request):
         exp = form.save(commit=False)
         exp.perfil = perfil
         exp.save()
-        return redirect('ver_cv')
+        return redirect('ver_hoja_de_vida')
     return render(request, 'crear_experiencia_laboral.html', {'form': form})
 
 @login_required
@@ -508,7 +427,7 @@ def add_educacion(request):
         edu = form.save(commit=False)
         edu.perfil = perfil
         edu.save()
-        return redirect('ver_cv')
+        return redirect('ver_hoja_de_vida')
     return render(request, 'add_habilidad.html', {'form': form, 'titulo': 'Añadir Educación'})
 
 @login_required
@@ -519,7 +438,7 @@ def add_habilidad(request):
         hab = form.save(commit=False)
         hab.perfil = perfil
         hab.save()
-        return redirect('ver_cv')
+        return redirect('ver_hoja_de_vida')
     return render(request, 'add_habilidad.html', {'form': form})
 
 @login_required
@@ -530,7 +449,7 @@ def add_curso(request):
         cur = form.save(commit=False)
         cur.perfil = perfil
         cur.save()
-        return redirect('ver_cv')
+        return redirect('ver_hoja_de_vida')
     return render(request, 'add_habilidad.html', {'form': form, 'titulo': 'Añadir Curso'})
 
 @login_required
@@ -541,7 +460,7 @@ def add_productos(request):
         prod = form.save(commit=False)
         prod.perfil = perfil
         prod.save()
-        return redirect('ver_cv')
+        return redirect('ver_hoja_de_vida')
     return render(request, 'add_productos.html', {'form': form})
 
 @login_required
@@ -552,7 +471,7 @@ def add_recomendacion(request):
         reco = form.save(commit=False)
         reco.perfil = perfil
         reco.save()
-        return redirect('ver_cv')
+        return redirect('ver_hoja_de_vida')
     return render(request, 'add_recomendacion.html', {'form': form})
 
 # --- VISTAS DE EDICIÓN (UPDATE) ---
@@ -665,7 +584,7 @@ def descargar_certificado(request, cert_type, cert_id):
     try:
         # Obtener el objeto según el tipo
         if cert_type == 'experiencia':
-            cert_obj = get_object_or_404(Experiencia, pk=cert_id, perfil__user=request.user)
+            cert_obj = get_object_or_404(ExperienciaLaboral, pk=cert_id, perfil__user=request.user)
         elif cert_type == 'curso':
             cert_obj = get_object_or_404(Curso, pk=cert_id, perfil__user=request.user)
         elif cert_type == 'recomendacion':
