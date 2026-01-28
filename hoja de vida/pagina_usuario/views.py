@@ -14,6 +14,7 @@ from io import BytesIO
 import os
 import logging
 import requests
+from urllib.parse import quote
 
 from pypdf import PdfReader, PdfWriter
 
@@ -37,39 +38,44 @@ logger = logging.getLogger(__name__)
 def serve_azure_media(request, file_path):
     """Proxy para servir archivos desde Azure Blob Storage"""
     try:
-        # Estamos usando Azure
-        from Val.azure_storage import AzureBlobStorage
-        storage = AzureBlobStorage()
+        logger.info(f'Serving media from Azure: {file_path}')
         
-        # Intentar leer el archivo directamente desde Azure
-        try:
-            blob_content = storage._open(file_path, 'rb')
-        except FileNotFoundError:
-            # Si no está guardado con ese nombre exacto, podría estar con UUID
-            # Intentar buscar en Azure
-            logger.warning(f'File {file_path} not found in Azure, searching...')
-            try:
-                service_client = storage._get_service_client()
-                container_client = service_client.get_container_client(storage.container_name)
-                
-                # Buscar un blob que coincida
-                found = False
-                blobs = container_client.list_blobs(name_starts_with=os.path.dirname(file_path))
-                base_filename = os.path.basename(file_path)
-                
-                for blob in blobs:
-                    if base_filename in blob.name or blob.name.startswith(os.path.dirname(file_path)):
-                        # Encontrado, usar este
-                        blob_content = storage._open(blob.name, 'rb')
-                        found = True
-                        logger.info(f'Found file as: {blob.name}')
-                        break
-                
-                if not found:
-                    return HttpResponse('File not found in Azure', status=404)
-            except Exception as e:
-                logger.error(f'Could not find file: {str(e)}')
-                return HttpResponse(f'File not found: {str(e)}', status=404)
+        basename = os.path.basename(file_path)
+        
+        # Intentar con diferentes prefijos
+        prefixes_to_try = [
+            file_path,  # Nombre original
+            basename,   # Solo el nombre
+        ]
+        
+        # Agregar prefijos específicos para fotos y certificados
+        if 'perfil_fotos' in file_path or 'foto' in file_path:
+            prefixes_to_try.extend([
+                f'perfil/foto/{basename}',
+                f'perfil_fotos/{basename}',
+            ])
+        
+        if 'certificados' in file_path:
+            prefixes_to_try.extend([
+                f'cursos/certificados/{basename}',
+                f'experiencia/certificados/{basename}',
+                f'cursos/{basename}',
+                f'experiencia/{basename}',
+            ])
+        
+        # Intentar descargar con cada prefijo
+        blob_content = None
+        
+        for prefix in prefixes_to_try:
+            logger.debug(f'Intentando: {prefix}')
+            blob_content = download_blob_bytes(prefix)
+            if blob_content:
+                logger.info(f'✓ Encontrado en Azure como: {prefix}')
+                break
+        
+        if not blob_content:
+            logger.error(f'No se encontró archivo: {file_path}')
+            return HttpResponse('Archivo no encontrado', status=404)
         
         # Determinar content type
         content_type = 'image/jpeg'
@@ -83,12 +89,15 @@ def serve_azure_media(request, file_path):
             content_type = 'application/pdf'
         
         # Servir el archivo
-        response = FileResponse(blob_content, content_type=content_type)
-        response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
+        response = FileResponse(
+            BytesIO(blob_content),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'inline; filename="{basename}"'
         return response
     
     except Exception as e:
-        logger.error(f'Error serving media from Azure: {str(e)}, file_path: {file_path}')
+        logger.exception(f'Error sirviendo media desde Azure: {str(e)}, file_path: {file_path}')
         return HttpResponse(f'Error: {str(e)}', status=500)
 
 # --- VISTAS DE AUTENTICACIÓN ---
