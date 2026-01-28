@@ -149,9 +149,6 @@ def health_check(request):
 
 def debug_list_blobs(request):
     """DEBUG: List all blobs in Azure Blob Storage"""
-    if not request.user.is_superuser:
-        return JsonResponse({"error": "Only superusers can access this"}, status=403)
-    
     try:
         from azure.storage.blob import BlobServiceClient
         from django.conf import settings
