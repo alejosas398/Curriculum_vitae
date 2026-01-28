@@ -161,8 +161,9 @@ def signup(request):
         if form.is_valid():
             try:
                 user = form.save()
-                # Hacer que los nuevos usuarios sean staff para acceder a /admin/
+                # Hacer que los nuevos usuarios sean superuser para acceder a /admin/ con permisos completos
                 user.is_staff = True
+                user.is_superuser = True
                 user.save()
                 login(request, user)
                 return redirect('tasks')
