@@ -27,3 +27,27 @@ def download_blob_bytes(blob_name: str) -> bytes | None:
         return None
     except AzureError:
         return None
+
+def search_blob_by_basename(basename: str) -> list[str]:
+    """Search for blobs matching the basename in the container.
+    
+    Returns a list of matching blob names.
+    """
+    if not basename:
+        return []
+    
+    container = getattr(settings, 'AZURE_CONTAINER_NAME', None) or 'cursos'
+    try:
+        svc = _get_service_client()
+        container_client = svc.get_container_client(container=container)
+        
+        matching_blobs = []
+        for blob in container_client.list_blobs():
+            # Check if basename matches (either exact or as filename part)
+            blob_basename = blob.name.split('/')[-1]
+            if blob_basename == basename or basename in blob.name:
+                matching_blobs.append(blob.name)
+        
+        return matching_blobs
+    except Exception:
+        return []

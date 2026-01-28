@@ -18,7 +18,7 @@ from urllib.parse import quote
 
 from pypdf import PdfReader, PdfWriter
 
-from .azure_blob import download_blob_bytes
+from .azure_blob import download_blob_bytes, search_blob_by_basename
 
 from .models import (
     Task, Perfil, Experiencia, Habilidad, 
@@ -65,13 +65,28 @@ def serve_azure_media(request, file_path):
         
         # Intentar descargar con cada prefijo
         blob_content = None
+        found_path = None
         
         for prefix in prefixes_to_try:
             logger.debug(f'Intentando: {prefix}')
             blob_content = download_blob_bytes(prefix)
             if blob_content:
                 logger.info(f'✓ Encontrado en Azure como: {prefix}')
+                found_path = prefix
                 break
+        
+        # Si no encontró con prefijos, buscar en Azure
+        if not blob_content:
+            logger.debug(f'Buscando en Azure por basename: {basename}')
+            matching_blobs = search_blob_by_basename(basename)
+            logger.debug(f'Blobs encontrados: {matching_blobs}')
+            
+            for blob_name in matching_blobs:
+                blob_content = download_blob_bytes(blob_name)
+                if blob_content:
+                    logger.info(f'✓ Encontrado en Azure como: {blob_name}')
+                    found_path = blob_name
+                    break
         
         if not blob_content:
             logger.error(f'No se encontró archivo: {file_path}')
